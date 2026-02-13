@@ -7,12 +7,24 @@ import GlassCard from '../components/GlassCard';
 const ActivityScreen = ({ user, setCurrentScreen, setActivityLog, activityLog, refreshData }) => {
     const [desc, setDesc] = useState('');
     const [time, setTime] = useState(new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }));
+    const [isRealTime, setIsRealTime] = useState(true); // Default to auto-update
     const [imagePreviews, setImagePreviews] = useState([]);
     const fileInputRef = useRef(null); // Camera
     const galleryInputRef = useRef(null); // Gallery
     const [viewImage, setViewImage] = useState(null);
     const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
     const [isProcessing, setIsProcessing] = useState(false);
+
+    // Real-time Clock Sync
+    React.useEffect(() => {
+        let interval;
+        if (isRealTime) {
+            interval = setInterval(() => {
+                setTime(new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }));
+            }, 1000);
+        }
+        return () => clearInterval(interval);
+    }, [isRealTime]);
 
     const processFile = (file) => {
         return new Promise((resolve) => {
@@ -30,7 +42,7 @@ const ActivityScreen = ({ user, setCurrentScreen, setActivityLog, activityLog, r
                     // Resize logic
                     let width = img.width;
                     let height = img.height;
-                    const maxDim = 1080;
+                    const maxDim = 720;
 
                     if (width > maxDim || height > maxDim) {
                         if (width > height) {
@@ -67,7 +79,7 @@ const ActivityScreen = ({ user, setCurrentScreen, setActivityLog, activityLog, r
                     ctx.fillStyle = 'white';
                     ctx.fillText(timestampText, x, y);
 
-                    resolve(canvas.toDataURL('image/jpeg', 0.8));
+                    resolve(canvas.toDataURL('image/jpeg', 0.6)); // Quality reduced to 0.6
                 };
                 img.onerror = () => {
                     alert(`Gagal memproses gambar ${file.name}`);
@@ -159,12 +171,26 @@ const ActivityScreen = ({ user, setCurrentScreen, setActivityLog, activityLog, r
                 <GlassCard className="p-5 mb-8">
                     <form onSubmit={save}>
                         <div className="mb-4">
-                            <label className="block text-xs font-bold text-slate-400 uppercase mb-2">Waktu</label>
+                            <div className="flex justify-between items-center mb-2">
+                                <label className="block text-xs font-bold text-slate-400 uppercase">Waktu</label>
+                                <label className="flex items-center space-x-2 cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        checked={isRealTime}
+                                        onChange={e => setIsRealTime(e.target.checked)}
+                                        className="rounded text-orange-500 focus:ring-orange-500"
+                                    />
+                                    <span className="text-[10px] font-bold text-slate-500 uppercase">Realtime</span>
+                                </label>
+                            </div>
                             <input
                                 type="time"
                                 value={time}
-                                onChange={e => setTime(e.target.value)}
-                                className="w-full bg-slate-50 border-none rounded-xl p-3 font-bold text-slate-700 focus:ring-2 focus:ring-orange-400"
+                                onChange={e => {
+                                    setTime(e.target.value);
+                                    setIsRealTime(false); // Disable auto-update if user edits
+                                }}
+                                className={`w-full bg-slate-50 border-none rounded-xl p-3 font-bold text-slate-700 focus:ring-2 focus:ring-orange-400 ${isRealTime ? 'opacity-70' : ''}`}
                             />
                         </div>
                         <div className="mb-4">
