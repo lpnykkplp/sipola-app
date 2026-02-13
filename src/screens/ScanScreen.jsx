@@ -250,7 +250,12 @@ const ScanScreen = ({ setCurrentScreen, qrDatabase, setScanHistory, scanHistory,
                                                     }`}></div>
                                                 <p className="font-bold text-slate-800">{log.loc}</p>
                                             </div>
-                                            <span className="font-mono text-xs font-bold text-slate-500 bg-slate-100 px-2 py-1 rounded">{log.time}</span>
+                                            <div className="text-right">
+                                                <span className="block font-mono text-xs font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded mb-1">{log.time}</span>
+                                                <span className="block text-[10px] font-bold text-slate-400">
+                                                    {new Date(log.dateISO).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
+                                                </span>
+                                            </div>
                                         </div>
                                         <div className="pl-6">
                                             <p className="text-sm text-slate-600 mb-2 italic">"{log.desc || "Tidak ada catatan."}"</p>

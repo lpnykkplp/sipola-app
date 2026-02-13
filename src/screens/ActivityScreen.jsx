@@ -27,16 +27,31 @@ const ActivityScreen = ({ user, setCurrentScreen, setActivityLog, activityLog, r
                 const img = new Image();
                 img.src = e.target.result;
                 img.onload = () => {
+                    // Resize logic
+                    let width = img.width;
+                    let height = img.height;
+                    const maxDim = 1080;
+
+                    if (width > maxDim || height > maxDim) {
+                        if (width > height) {
+                            height = Math.round((height * maxDim) / width);
+                            width = maxDim;
+                        } else {
+                            width = Math.round((width * maxDim) / height);
+                            height = maxDim;
+                        }
+                    }
+
                     const canvas = document.createElement('canvas');
                     const ctx = canvas.getContext('2d');
-                    canvas.width = img.width;
-                    canvas.height = img.height;
-                    ctx.drawImage(img, 0, 0);
+                    canvas.width = width;
+                    canvas.height = height;
+                    ctx.drawImage(img, 0, 0, width, height);
 
                     // Watermark
                     const date = new Date();
                     const timestampText = date.toLocaleString('id-ID');
-                    const fontSize = Math.max(24, Math.floor(img.height * 0.03));
+                    const fontSize = Math.max(24, Math.floor(height * 0.03));
                     ctx.font = `bold ${fontSize}px sans-serif`;
                     ctx.textAlign = 'right';
                     ctx.textBaseline = 'bottom';

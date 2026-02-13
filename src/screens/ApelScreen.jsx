@@ -24,7 +24,14 @@ const ApelScreen = ({ user, setCurrentScreen, apelHistory, setApelHistory, apelI
         return `${days[d.getDay()]}, ${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
     };
 
-    const todayISO = new Date().toISOString().split('T')[0];
+    // Real-time Date
+    const [currentTime, setCurrentTime] = useState(new Date());
+    React.useEffect(() => {
+        const timer = setInterval(() => setCurrentTime(new Date()), 60000); // Update every minute
+        return () => clearInterval(timer);
+    }, []);
+
+    const todayISO = currentTime.toISOString().split('T')[0];
     const todayFormatted = getFormattedDate(todayISO);
 
     const save = async () => {
