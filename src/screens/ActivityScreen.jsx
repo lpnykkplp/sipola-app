@@ -171,18 +171,7 @@ const ActivityScreen = ({ user, setCurrentScreen, setActivityLog, activityLog, r
                 <GlassCard className="p-5 mb-8">
                     <form onSubmit={save}>
                         <div className="mb-4">
-                            <div className="flex justify-between items-center mb-2">
-                                <label className="block text-xs font-bold text-slate-400 uppercase">Waktu</label>
-                                <label className="flex items-center space-x-2 cursor-pointer">
-                                    <input
-                                        type="checkbox"
-                                        checked={isRealTime}
-                                        onChange={e => setIsRealTime(e.target.checked)}
-                                        className="rounded text-orange-500 focus:ring-orange-500"
-                                    />
-                                    <span className="text-[10px] font-bold text-slate-500 uppercase">Realtime</span>
-                                </label>
-                            </div>
+                            <label className="block text-xs font-bold text-slate-400 uppercase mb-2">Waktu</label>
                             <input
                                 type="time"
                                 value={time}
