@@ -1,6 +1,6 @@
 import { api } from '../services/api';
 import React, { useState, useRef } from 'react';
-import { Save, Camera, Trash2, Eye, X, History, CalendarDays, Image } from 'lucide-react';
+import { Save, Camera, Trash2, Eye, X, History, CalendarDays, Image, Loader2 } from 'lucide-react';
 import Header from '../components/Header';
 import GlassCard from '../components/GlassCard';
 
@@ -12,19 +12,18 @@ const ActivityScreen = ({ user, setCurrentScreen, setActivityLog, activityLog, r
     const galleryInputRef = useRef(null); // Gallery
     const [viewImage, setViewImage] = useState(null);
     const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+    const [isProcessing, setIsProcessing] = useState(false);
 
-    const handleImageUpload = (e) => {
-        const files = Array.from(e.target.files);
-        if (files.length === 0) return;
-
-        files.forEach(file => {
+    const processFile = (file) => {
+        return new Promise((resolve) => {
             if (!file.type.startsWith('image/')) {
                 alert(`File ${file.name} bukan gambar!`);
+                resolve(null);
                 return;
             }
 
             const reader = new FileReader();
-            reader.onload = (e) => { // Use onload instead of onloadend for success only
+            reader.onload = (e) => {
                 const img = new Image();
                 img.src = e.target.result;
                 img.onload = () => {
@@ -53,18 +52,39 @@ const ActivityScreen = ({ user, setCurrentScreen, setActivityLog, activityLog, r
                     ctx.fillStyle = 'white';
                     ctx.fillText(timestampText, x, y);
 
-                    setImagePreviews(prev => [...prev, canvas.toDataURL('image/jpeg', 0.8)]);
+                    resolve(canvas.toDataURL('image/jpeg', 0.8));
                 };
                 img.onerror = () => {
-                    alert(`Gagal memproses gambar ${file.name}. Format mungkin tidak didukung.`);
+                    alert(`Gagal memproses gambar ${file.name}`);
+                    resolve(null);
                 };
             };
+            reader.onerror = () => resolve(null);
             reader.readAsDataURL(file);
         });
+    };
 
-        // Reset inputs to allow selecting same file again
-        if (fileInputRef.current) fileInputRef.current.value = '';
-        if (galleryInputRef.current) galleryInputRef.current.value = '';
+    const handleImageUpload = async (e) => {
+        const files = Array.from(e.target.files);
+        if (files.length === 0) return;
+
+        setIsProcessing(true);
+        try {
+            const promises = files.map(file => processFile(file));
+            const results = await Promise.all(promises);
+            const validImages = results.filter(img => img !== null);
+
+            if (validImages.length > 0) {
+                setImagePreviews(prev => [...prev, ...validImages]);
+            }
+        } catch (error) {
+            console.error("Upload error:", error);
+            alert("Terjadi kesalahan saat memproses gambar.");
+        } finally {
+            setIsProcessing(false);
+            if (fileInputRef.current) fileInputRef.current.value = '';
+            if (galleryInputRef.current) galleryInputRef.current.value = '';
+        }
     };
 
     const removeImage = (index) => {
@@ -165,6 +185,16 @@ const ActivityScreen = ({ user, setCurrentScreen, setActivityLog, activityLog, r
                                     <span>Dari Galeri</span>
                                 </button>
                             </div>
+
+                            {isProcessing && (
+                                <div className="flex justify-center my-4">
+                                    <div className="flex items-center space-x-2 text-slate-500 text-sm font-bold bg-slate-100 px-4 py-2 rounded-full animate-pulse">
+                                        <Loader2 className="animate-spin text-orange-500" size={16} />
+                                        <span>Memproses gambar...</span>
+                                    </div>
+                                </div>
+                            )}
+
                             {imagePreviews.length > 0 && (
                                 <div className="grid grid-cols-2 gap-3">
                                     {imagePreviews.map((img, idx) => (

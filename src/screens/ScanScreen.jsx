@@ -15,25 +15,41 @@ const ScanScreen = ({ setCurrentScreen, qrDatabase, setScanHistory, scanHistory,
 
     const startCam = async () => {
         if (!window.Html5Qrcode) return;
-        if (!scannerRef.current) scannerRef.current = new window.Html5Qrcode("reader");
+        // Reuse instance if exists
         try {
-            await scannerRef.current.start(
-                { facingMode: "environment" },
-                { fps: 15, qrbox: 250, aspectRatio: 1 },
-                (txt) => handleScan(txt),
-                () => { }
-            );
-            setStatus('scanning');
+            if (!scannerRef.current) {
+                scannerRef.current = new window.Html5Qrcode("reader");
+            }
+
+            // Allow restarting if it was stopped but instance exists
+            if (!scannerRef.current.isScanning) {
+                await scannerRef.current.start(
+                    { facingMode: "environment" },
+                    { fps: 15, qrbox: 250, aspectRatio: 1 },
+                    (txt) => handleScan(txt),
+                    () => { }
+                );
+                setStatus('scanning');
+            }
         } catch (e) {
-            console.error(e);
+            console.error("Camera start error:", e);
+            // If error implies instance is messed up, recreate it
+            if (scannerRef.current) {
+                try { await scannerRef.current.clear(); } catch { }
+                scannerRef.current = null;
+            }
         }
     };
 
     const stopCam = async () => {
         if (scannerRef.current?.isScanning) {
-            await scannerRef.current.stop();
-            scannerRef.current.clear();
-            scannerRef.current = null;
+            try {
+                await scannerRef.current.stop();
+                scannerRef.current.clear();
+                // Do NOT set to null, keep instance alive for reuse
+            } catch (e) {
+                console.error("Stop cam error:", e);
+            }
             setStatus('idle');
         }
     };
@@ -177,8 +193,8 @@ const ScanScreen = ({ setCurrentScreen, qrDatabase, setScanHistory, scanHistory,
                                 <div className={`w-20 h-20 mx-auto rounded-full flex items-center justify-center mb-4 ${result.valid ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
                                     {result.valid ? <CheckCircle size={40} /> : <AlertTriangle size={40} />}
                                 </div>
-                                <h3 className="text-xl font-bold mb-1">{result.valid ? 'Laporan Tersimpan' : 'Tidak Dikenal'}</h3>
-                                <p className="text-slate-500 text-sm mb-6">{result.location || `ID: ${result.id}`}</p>
+                                <h3 className="text-xl font-bold mb-1">{result.valid ? 'Laporan Tersimpan' : 'QR Tidak Terdaftar'}</h3>
+                                <p className="text-slate-500 text-sm mb-6">{result.valid ? result.location : `ID: ${result.id} belum ada di database.`}</p>
                                 {result.valid && (
                                     <div className="bg-slate-50 rounded-xl p-4 mb-6 border border-slate-100">
                                         <div className="flex justify-between text-sm mb-1">
