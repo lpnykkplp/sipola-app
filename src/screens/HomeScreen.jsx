@@ -8,6 +8,22 @@ import MenuCard from '../components/MenuCard';
 const HomeScreen = ({ user, setCurrentScreen, apelHistory, activityLog }) => {
     const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
     const [viewImage, setViewImage] = useState(null);
+    const [currentTime, setCurrentTime] = useState(new Date());
+
+    // 🔴 Real-time Clock
+    React.useEffect(() => {
+        const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+        return () => clearInterval(timer);
+    }, []);
+
+    const formatDate = (date) => {
+        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        return date.toLocaleDateString('id-ID', options);
+    };
+
+    const formatTime = (date) => {
+        return date.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' }).replace('.', ':');
+    };
 
     const getApelData = (shift) => {
         const found = apelHistory.find(item => item.dateISO === selectedDate && item.shift === shift);
@@ -50,6 +66,13 @@ const HomeScreen = ({ user, setCurrentScreen, apelHistory, activityLog }) => {
                     <div>
                         <p className="text-blue-300 text-[10px] font-bold uppercase tracking-widest mb-1">Status: Aktif</p>
                         <h2 className="text-3xl font-black text-white leading-tight">{user.name}</h2>
+
+                        {/* 🔴 Real-time Date & Time Display */}
+                        <div className="mt-4 mb-2">
+                            <p className="text-blue-200 text-xs font-medium opacity-80">{formatDate(currentTime)}</p>
+                            <p className="text-white text-3xl font-mono font-bold tracking-tighter">{formatTime(currentTime)} <span className="text-sm font-sans text-blue-300">WIB</span></p>
+                        </div>
+
                         <div className="mt-2 inline-flex items-center px-3 py-1 bg-white/10 backdrop-blur-md border border-white/20 rounded-full">
                             <span className="text-[10px] font-bold text-white uppercase tracking-wide">{user.role}</span>
                         </div>

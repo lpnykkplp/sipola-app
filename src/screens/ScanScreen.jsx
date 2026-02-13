@@ -32,6 +32,7 @@ const ScanScreen = ({ setCurrentScreen, qrDatabase, setScanHistory, scanHistory,
         if (scannerRef.current?.isScanning) {
             await scannerRef.current.stop();
             scannerRef.current.clear();
+            scannerRef.current = null;
             setStatus('idle');
         }
     };

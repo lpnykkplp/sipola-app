@@ -1,6 +1,6 @@
 import { api } from '../services/api';
 import React, { useState, useRef } from 'react';
-import { Save, Camera, Trash2, Eye, X, History, CalendarDays } from 'lucide-react';
+import { Save, Camera, Trash2, Eye, X, History, CalendarDays, Image } from 'lucide-react';
 import Header from '../components/Header';
 import GlassCard from '../components/GlassCard';
 
@@ -8,7 +8,8 @@ const ActivityScreen = ({ user, setCurrentScreen, setActivityLog, activityLog, r
     const [desc, setDesc] = useState('');
     const [time, setTime] = useState(new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }));
     const [imagePreviews, setImagePreviews] = useState([]);
-    const fileInputRef = useRef(null);
+    const fileInputRef = useRef(null); // Camera
+    const galleryInputRef = useRef(null); // Gallery
     const [viewImage, setViewImage] = useState(null);
     const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
 
@@ -123,14 +124,26 @@ const ActivityScreen = ({ user, setCurrentScreen, setActivityLog, activityLog, r
                         <div className="mb-4">
                             <label className="block text-xs font-bold text-slate-400 uppercase mb-2">Dokumentasi Foto</label>
                             <input type="file" accept="image/*" multiple capture="environment" ref={fileInputRef} className="hidden" onChange={handleImageUpload} />
-                            <button
-                                type="button"
-                                onClick={() => fileInputRef.current.click()}
-                                className="w-full py-4 border-2 border-dashed border-slate-300 rounded-2xl text-slate-400 font-bold hover:border-orange-400 hover:text-orange-500 hover:bg-orange-50 transition flex flex-col items-center justify-center bg-slate-50 mb-3"
-                            >
-                                <Camera className="mb-2" size={24} />
-                                <span>Ambil / Upload Foto (Bisa Banyak)</span>
-                            </button>
+                            <input type="file" accept="image/*" multiple ref={galleryInputRef} className="hidden" onChange={handleImageUpload} />
+
+                            <div className="flex gap-3 mb-3">
+                                <button
+                                    type="button"
+                                    onClick={() => fileInputRef.current.click()}
+                                    className="flex-1 py-4 border-2 border-dashed border-slate-300 rounded-2xl text-slate-400 font-bold hover:border-orange-400 hover:text-orange-500 hover:bg-orange-50 transition flex flex-col items-center justify-center bg-slate-50"
+                                >
+                                    <Camera className="mb-2" size={24} />
+                                    <span>Ambil Foto</span>
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => galleryInputRef.current.click()}
+                                    className="flex-1 py-4 border-2 border-dashed border-slate-300 rounded-2xl text-slate-400 font-bold hover:border-blue-400 hover:text-blue-500 hover:bg-blue-50 transition flex flex-col items-center justify-center bg-slate-50"
+                                >
+                                    <Image className="mb-2" size={24} />
+                                    <span>Dari Galeri</span>
+                                </button>
+                            </div>
                             {imagePreviews.length > 0 && (
                                 <div className="grid grid-cols-2 gap-3">
                                     {imagePreviews.map((img, idx) => (

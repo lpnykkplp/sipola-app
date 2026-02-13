@@ -80,6 +80,7 @@ const App = () => {
             const mappedScans = (scans || []).map(s => ({
                 ...s,
                 loc: s.location, // DB: location, App: loc
+                desc: s.description, // DB: description, App: desc
                 dateISO: s.date_iso
             }));
             setScanHistory(mappedScans);
