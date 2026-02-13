@@ -15,17 +15,26 @@ const ActivityScreen = ({ user, setCurrentScreen, setActivityLog, activityLog, r
 
     const handleImageUpload = (e) => {
         const files = Array.from(e.target.files);
+        if (files.length === 0) return;
+
         files.forEach(file => {
+            if (!file.type.startsWith('image/')) {
+                alert(`File ${file.name} bukan gambar!`);
+                return;
+            }
+
             const reader = new FileReader();
-            reader.onloadend = () => {
+            reader.onload = (e) => { // Use onload instead of onloadend for success only
                 const img = new Image();
-                img.src = reader.result;
+                img.src = e.target.result;
                 img.onload = () => {
                     const canvas = document.createElement('canvas');
                     const ctx = canvas.getContext('2d');
                     canvas.width = img.width;
                     canvas.height = img.height;
                     ctx.drawImage(img, 0, 0);
+
+                    // Watermark
                     const date = new Date();
                     const timestampText = date.toLocaleString('id-ID');
                     const fontSize = Math.max(24, Math.floor(img.height * 0.03));
@@ -34,16 +43,28 @@ const ActivityScreen = ({ user, setCurrentScreen, setActivityLog, activityLog, r
                     ctx.textBaseline = 'bottom';
                     const x = canvas.width - (fontSize * 0.5);
                     const y = canvas.height - (fontSize * 0.5);
+
+                    // Outline
                     ctx.strokeStyle = 'black';
                     ctx.lineWidth = fontSize / 6;
                     ctx.strokeText(timestampText, x, y);
+
+                    // Text
                     ctx.fillStyle = 'white';
                     ctx.fillText(timestampText, x, y);
+
                     setImagePreviews(prev => [...prev, canvas.toDataURL('image/jpeg', 0.8)]);
+                };
+                img.onerror = () => {
+                    alert(`Gagal memproses gambar ${file.name}. Format mungkin tidak didukung.`);
                 };
             };
             reader.readAsDataURL(file);
         });
+
+        // Reset inputs to allow selecting same file again
+        if (fileInputRef.current) fileInputRef.current.value = '';
+        if (galleryInputRef.current) galleryInputRef.current.value = '';
     };
 
     const removeImage = (index) => {

@@ -11,6 +11,7 @@ const ScanScreen = ({ setCurrentScreen, qrDatabase, setScanHistory, scanHistory,
     const [description, setDescription] = useState('');
     const scannerRef = useRef(null);
     const [status, setStatus] = useState('idle');
+    const [showHistory, setShowHistory] = useState(false);
 
     const startCam = async () => {
         if (!window.Html5Qrcode) return;
@@ -100,11 +101,16 @@ const ScanScreen = ({ setCurrentScreen, qrDatabase, setScanHistory, scanHistory,
     return (
         <div className="min-h-screen bg-black text-white flex flex-col font-sans">
             <div className="absolute top-0 left-0 w-full p-6 flex justify-between items-center z-20 bg-gradient-to-b from-black/80 to-transparent">
-                <button onClick={() => setCurrentScreen('home')} className="w-10 h-10 bg-white/10 backdrop-blur rounded-full flex items-center justify-center hover:bg-white/20">
+                <button onClick={() => setCurrentScreen('home')} className="w-10 h-10 bg-white/10 backdrop-blur rounded-full flex items-center justify-center hover:bg-white/20 transition">
                     <X size={20} />
                 </button>
-                <span className="font-bold tracking-wider text-sm uppercase opacity-80">Scanner Mode</span>
-                <div className="w-10"></div>
+                <div className="flex flex-col items-center">
+                    <span className="font-bold tracking-wider text-sm uppercase opacity-90">Scanner Mode</span>
+                    <span className="text-[10px] text-white/50">{status === 'scanning' ? 'Mencari QR...' : 'Standby'}</span>
+                </div>
+                <button onClick={() => setShowHistory(true)} className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center hover:bg-blue-500 transition shadow-lg shadow-blue-900/50">
+                    <History size={20} className="text-white" />
+                </button>
             </div>
 
             <div className="flex-1 relative flex flex-col">
@@ -199,43 +205,53 @@ const ScanScreen = ({ setCurrentScreen, qrDatabase, setScanHistory, scanHistory,
                     )}
                 </div>
 
-                <div className="h-1/3 bg-white text-slate-900 rounded-t-3xl -mt-6 z-10 p-6 flex flex-col">
-                    <div className="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mb-6"></div>
-                    <h4 className="font-bold text-lg mb-4 flex items-center">
-                        <History className="mr-2 text-slate-400" size={18} /> Riwayat Sesi Ini
-                    </h4>
-                    <div className="flex-1 overflow-y-auto space-y-3 pr-2">
-                        {scanHistory.length === 0 ? (
-                            <p className="text-center text-slate-400 text-sm py-4 italic">Belum ada data scan.</p>
-                        ) : (
-                            scanHistory.map(log => (
-                                <div key={log.id} className="flex flex-col p-3 bg-slate-50 rounded-xl border border-slate-100">
-                                    <div className="flex items-center justify-between mb-1">
-                                        <div className="flex items-center">
-                                            <div className={`w-2 h-2 rounded-full mr-2 ${log.status === 'Aman' ? 'bg-green-500' :
-                                                log.status === 'Rawan' ? 'bg-yellow-500' :
-                                                    log.status === 'Waspada' ? 'bg-orange-500' :
-                                                        'bg-red-600'
-                                                }`}></div>
-                                            <p className="font-bold text-sm text-slate-700">{log.loc}</p>
-                                        </div>
-                                        <span className="font-mono text-xs font-bold text-slate-500 bg-white px-2 py-1 rounded border border-slate-200">{log.time}</span>
-                                    </div>
-                                    <div className="pl-4 flex justify-between items-end">
-                                        <p className="text-xs text-slate-500 line-clamp-1 italic">{log.desc || "Tidak ada catatan."}</p>
-                                        <span className={`text-[10px] font-bold uppercase ${log.status === 'Aman' ? 'text-green-600' :
-                                            log.status === 'Rawan' ? 'text-yellow-600' :
-                                                log.status === 'Waspada' ? 'text-orange-600' :
-                                                    'text-red-600'
-                                            }`}>
-                                            {log.status}
-                                        </span>
-                                    </div>
+                {/* History Modal */}
+                {showHistory && (
+                    <div className="fixed inset-0 z-50 bg-slate-900 flex flex-col animate-fade-in-up">
+                        <div className="p-6 bg-white border-b border-slate-100 flex justify-between items-center text-slate-900">
+                            <h3 className="font-bold text-lg flex items-center">
+                                <History className="mr-2 text-slate-400" size={20} /> Riwayat Sesi Ini
+                            </h3>
+                            <button onClick={() => setShowHistory(false)} className="w-8 h-8 bg-slate-100 rounded-full flex items-center justify-center hover:bg-slate-200">
+                                <X size={18} />
+                            </button>
+                        </div>
+                        <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-slate-50">
+                            {scanHistory.length === 0 ? (
+                                <div className="h-full flex flex-col items-center justify-center opacity-40">
+                                    <History size={48} className="mb-2" />
+                                    <p className="text-sm font-bold">Belum ada data scan.</p>
                                 </div>
-                            ))
-                        )}
+                            ) : (
+                                scanHistory.map(log => (
+                                    <div key={log.id} className="flex flex-col p-4 bg-white rounded-2xl border border-slate-100 shadow-sm">
+                                        <div className="flex items-center justify-between mb-2">
+                                            <div className="flex items-center">
+                                                <div className={`w-3 h-3 rounded-full mr-3 ${log.status === 'Aman' ? 'bg-green-500' :
+                                                    log.status === 'Rawan' ? 'bg-yellow-500' :
+                                                        log.status === 'Waspada' ? 'bg-orange-500' :
+                                                            'bg-red-600'
+                                                    }`}></div>
+                                                <p className="font-bold text-slate-800">{log.loc}</p>
+                                            </div>
+                                            <span className="font-mono text-xs font-bold text-slate-500 bg-slate-100 px-2 py-1 rounded">{log.time}</span>
+                                        </div>
+                                        <div className="pl-6">
+                                            <p className="text-sm text-slate-600 mb-2 italic">"{log.desc || "Tidak ada catatan."}"</p>
+                                            <span className={`text-xs font-bold uppercase px-2 py-1 rounded ${log.status === 'Aman' ? 'bg-green-50 text-green-600' :
+                                                log.status === 'Rawan' ? 'bg-yellow-50 text-yellow-600' :
+                                                    log.status === 'Waspada' ? 'bg-orange-50 text-orange-600' :
+                                                        'bg-red-50 text-red-600'
+                                                }`}>
+                                                {log.status}
+                                            </span>
+                                        </div>
+                                    </div>
+                                ))
+                            )}
+                        </div>
                     </div>
-                </div>
+                )}
             </div>
         </div>
     );
