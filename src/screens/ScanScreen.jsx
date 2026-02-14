@@ -1,5 +1,5 @@
 import { api } from '../services/api';
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
     X, MapPin, CheckCircle, AlertTriangle, History
 } from 'lucide-react';
@@ -13,59 +13,77 @@ const ScanScreen = ({ setCurrentScreen, qrDatabase, setScanHistory, scanHistory,
     const [status, setStatus] = useState('idle');
     const [showHistory, setShowHistory] = useState(false);
 
-    const startCam = async () => {
-        if (!window.Html5Qrcode) return;
-        // Reuse instance if exists
-        try {
-            if (!scannerRef.current) {
-                scannerRef.current = new window.Html5Qrcode("reader");
-            }
+    // Whether the camera view should be visible (no overlays)
+    const isCameraVisible = !result && !tempScan;
 
-            // Allow restarting if it was stopped but instance exists
-            if (!scannerRef.current.isScanning) {
-                await scannerRef.current.start(
-                    { facingMode: "environment" },
-                    { fps: 15, qrbox: 250, aspectRatio: 1 },
-                    (txt) => handleScan(txt),
-                    () => { }
-                );
-                setStatus('scanning');
-            }
-        } catch (e) {
-            console.error("Camera start error:", e);
-            // If error implies instance is messed up, recreate it
+    const startCam = useCallback(async () => {
+        if (!window.Html5Qrcode) return;
+        try {
+            // Always create a fresh instance for a clean DOM binding
             if (scannerRef.current) {
-                try { await scannerRef.current.clear(); } catch { }
+                try {
+                    if (scannerRef.current.isScanning) await scannerRef.current.stop();
+                    scannerRef.current.clear();
+                } catch { }
                 scannerRef.current = null;
             }
-        }
-    };
+            scannerRef.current = new window.Html5Qrcode("reader");
 
-    const stopCam = async () => {
-        if (scannerRef.current?.isScanning) {
+            await scannerRef.current.start(
+                { facingMode: "environment" },
+                { fps: 10, qrbox: 250, aspectRatio: 1 },
+                (txt) => handleScan(txt),
+                () => { }
+            );
+            setStatus('scanning');
+        } catch (e) {
+            console.error("Camera start error:", e);
+            scannerRef.current = null;
+        }
+    }, [qrDatabase]);
+
+    const stopCam = useCallback(async () => {
+        if (scannerRef.current) {
             try {
-                await scannerRef.current.stop();
+                if (scannerRef.current.isScanning) await scannerRef.current.stop();
                 scannerRef.current.clear();
-                // Do NOT set to null, keep instance alive for reuse
             } catch (e) {
                 console.error("Stop cam error:", e);
             }
+            scannerRef.current = null;
             setStatus('idle');
         }
-    };
+    }, []);
 
-    const handleScan = (txt) => {
-        stopCam();
-        const point = qrDatabase.find(q => q.id === txt);
+    const handleScan = useCallback((txt) => {
+        // Stop camera immediately
+        if (scannerRef.current?.isScanning) {
+            scannerRef.current.stop().then(() => {
+                try { scannerRef.current.clear(); } catch { }
+                scannerRef.current = null;
+            }).catch(() => { scannerRef.current = null; });
+        }
+        setStatus('idle');
+
+        const scannedText = txt.trim();
+        console.log("Scanned QR text:", scannedText);
+        console.log("QR Database IDs:", qrDatabase.map(q => q.id));
+
+        // Robust matching: trim and compare
+        const point = qrDatabase.find(q =>
+            q.id.toString().trim() === scannedText ||
+            q.id.toString().trim().toLowerCase() === scannedText.toLowerCase()
+        );
+
         const time = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
         const dateISO = new Date().toISOString().split('T')[0];
+
         if (point) {
             setTempScan({ ...point, time, dateISO });
         } else {
-            setResult({ id: txt, valid: false });
-            setStatus('error');
+            setResult({ id: scannedText, valid: false });
         }
-    };
+    }, [qrDatabase]);
 
     const handleSaveScan = async () => {
         if (!tempScan) return;
@@ -78,7 +96,7 @@ const ScanScreen = ({ setCurrentScreen, qrDatabase, setScanHistory, scanHistory,
                 time: tempScan.time,
                 dateISO: tempScan.dateISO
             });
-            refreshData(); // Fetch latest from DB
+            refreshData();
             setResult({ ...tempScan, valid: true, status: condition });
             setTempScan(null);
             setCondition('Aman');
@@ -88,6 +106,7 @@ const ScanScreen = ({ setCurrentScreen, qrDatabase, setScanHistory, scanHistory,
         }
     };
 
+    // Initial camera start
     useEffect(() => {
         if (!window.Html5Qrcode) {
             const s = document.createElement('script');
@@ -96,16 +115,20 @@ const ScanScreen = ({ setCurrentScreen, qrDatabase, setScanHistory, scanHistory,
             s.onload = () => setTimeout(startCam, 500);
             document.body.appendChild(s);
         } else {
-            setTimeout(startCam, 100);
+            setTimeout(startCam, 300);
         }
         return () => stopCam();
     }, []);
 
-    const resetScan = () => {
+    // Restart camera when user dismisses result/tempScan
+    const resetScan = useCallback(() => {
         setResult(null);
         setTempScan(null);
-        startCam();
-    };
+        setCondition('Aman');
+        setDescription('');
+        // Give React a tick to re-render the #reader div, then start camera
+        setTimeout(() => startCam(), 300);
+    }, [startCam]);
 
     const statusColors = {
         'Aman': 'bg-green-500 hover:bg-green-600',
@@ -131,10 +154,11 @@ const ScanScreen = ({ setCurrentScreen, qrDatabase, setScanHistory, scanHistory,
 
             <div className="flex-1 relative flex flex-col">
                 <div className="relative flex-1 bg-slate-900 overflow-hidden">
-                    {!result && !tempScan && (
+                    {/* Reader div: always rendered when no overlay, destroyed on overlay to release camera */}
+                    {isCameraVisible && (
                         <div id="reader" className="w-full h-full [&>video]:object-cover [&>video]:h-full [&>video]:w-full"></div>
                     )}
-                    {!result && !tempScan && (
+                    {isCameraVisible && (
                         <div className="absolute inset-0 flex flex-col items-end justify-end pointer-events-none pb-10">
                             <p className="text-sm font-medium text-white/70 bg-black/50 px-4 py-2 rounded-full backdrop-blur mx-auto">Arahkan kamera ke QR Code</p>
                         </div>
