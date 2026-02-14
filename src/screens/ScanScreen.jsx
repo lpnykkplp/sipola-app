@@ -10,8 +10,15 @@ const ScanScreen = ({ setCurrentScreen, qrDatabase, setScanHistory, scanHistory,
     const [condition, setCondition] = useState('Aman');
     const [description, setDescription] = useState('');
     const scannerRef = useRef(null);
+    const qrDatabaseRef = useRef(qrDatabase); // Always hold latest
     const [status, setStatus] = useState('idle');
     const [showHistory, setShowHistory] = useState(false);
+
+    // Keep the ref in sync with the prop at all times
+    useEffect(() => {
+        qrDatabaseRef.current = qrDatabase;
+        console.log("QR Database updated, count:", qrDatabase.length, qrDatabase.map(q => q.id));
+    }, [qrDatabase]);
 
     // Whether the camera view should be visible (no overlays)
     const isCameraVisible = !result && !tempScan;
@@ -40,7 +47,7 @@ const ScanScreen = ({ setCurrentScreen, qrDatabase, setScanHistory, scanHistory,
             console.error("Camera start error:", e);
             scannerRef.current = null;
         }
-    }, [qrDatabase]);
+    }, []);
 
     const stopCam = useCallback(async () => {
         if (scannerRef.current) {
@@ -66,11 +73,13 @@ const ScanScreen = ({ setCurrentScreen, qrDatabase, setScanHistory, scanHistory,
         setStatus('idle');
 
         const scannedText = txt.trim();
+        // Read from REF (always latest), not from the closure-captured prop
+        const currentDb = qrDatabaseRef.current;
         console.log("Scanned QR text:", scannedText);
-        console.log("QR Database IDs:", qrDatabase.map(q => q.id));
+        console.log("QR Database IDs:", currentDb.map(q => q.id));
 
-        // Robust matching: trim and compare
-        const point = qrDatabase.find(q =>
+        // Robust matching: trim and compare (case-insensitive)
+        const point = currentDb.find(q =>
             q.id.toString().trim() === scannedText ||
             q.id.toString().trim().toLowerCase() === scannedText.toLowerCase()
         );
@@ -83,7 +92,7 @@ const ScanScreen = ({ setCurrentScreen, qrDatabase, setScanHistory, scanHistory,
         } else {
             setResult({ id: scannedText, valid: false });
         }
-    }, [qrDatabase]);
+    }, []);
 
     const handleSaveScan = async () => {
         if (!tempScan) return;
