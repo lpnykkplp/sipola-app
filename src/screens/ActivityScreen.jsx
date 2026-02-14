@@ -1,6 +1,6 @@
 import { api } from '../services/api';
 import React, { useState, useRef } from 'react';
-import { Save, Camera, Trash2, Eye, X, History, CalendarDays, Image, Loader2 } from 'lucide-react';
+import { Save, Trash2, Eye, X, History, CalendarDays, Image, Loader2 } from 'lucide-react';
 import Header from '../components/Header';
 import GlassCard from '../components/GlassCard';
 
@@ -9,8 +9,7 @@ const ActivityScreen = ({ user, setCurrentScreen, setActivityLog, activityLog, r
     const [time, setTime] = useState(new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }));
     const [isRealTime, setIsRealTime] = useState(true); // Default to auto-update
     const [imagePreviews, setImagePreviews] = useState([]);
-    const fileInputRef = useRef(null); // Camera
-    const galleryInputRef = useRef(null); // Gallery
+    const galleryInputRef = useRef(null);
     const [viewImage, setViewImage] = useState(null);
     const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
     const [isProcessing, setIsProcessing] = useState(false);
@@ -109,7 +108,6 @@ const ActivityScreen = ({ user, setCurrentScreen, setActivityLog, activityLog, r
             alert("Terjadi kesalahan saat memproses gambar.");
         } finally {
             setIsProcessing(false);
-            if (fileInputRef.current) fileInputRef.current.value = '';
             if (galleryInputRef.current) galleryInputRef.current.value = '';
         }
     };
@@ -194,27 +192,16 @@ const ActivityScreen = ({ user, setCurrentScreen, setActivityLog, activityLog, r
                         </div>
                         <div className="mb-4">
                             <label className="block text-xs font-bold text-slate-400 uppercase mb-2">Dokumentasi Foto</label>
-                            <input type="file" accept="image/*" multiple capture="environment" ref={fileInputRef} className="hidden" onChange={handleImageUpload} />
                             <input type="file" accept="image/*" multiple ref={galleryInputRef} className="hidden" onChange={handleImageUpload} />
 
-                            <div className="flex gap-3 mb-3">
-                                <button
-                                    type="button"
-                                    onClick={() => fileInputRef.current.click()}
-                                    className="flex-1 py-4 border-2 border-dashed border-slate-300 rounded-2xl text-slate-400 font-bold hover:border-orange-400 hover:text-orange-500 hover:bg-orange-50 transition flex flex-col items-center justify-center bg-slate-50"
-                                >
-                                    <Camera className="mb-2" size={24} />
-                                    <span>Ambil Foto</span>
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => galleryInputRef.current.click()}
-                                    className="flex-1 py-4 border-2 border-dashed border-slate-300 rounded-2xl text-slate-400 font-bold hover:border-blue-400 hover:text-blue-500 hover:bg-blue-50 transition flex flex-col items-center justify-center bg-slate-50"
-                                >
-                                    <Image className="mb-2" size={24} />
-                                    <span>Dari Galeri</span>
-                                </button>
-                            </div>
+                            <button
+                                type="button"
+                                onClick={() => galleryInputRef.current.click()}
+                                className="w-full py-4 border-2 border-dashed border-slate-300 rounded-2xl text-slate-400 font-bold hover:border-orange-400 hover:text-orange-500 hover:bg-orange-50 transition flex flex-col items-center justify-center bg-slate-50 mb-3"
+                            >
+                                <Image className="mb-2" size={24} />
+                                <span>Pilih Foto dari Galeri</span>
+                            </button>
 
                             {isProcessing && (
                                 <div className="flex justify-center my-4">
