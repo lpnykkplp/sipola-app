@@ -25,91 +25,23 @@ const ActivityScreen = ({ user, setCurrentScreen, setActivityLog, activityLog, r
         return () => clearInterval(interval);
     }, [isRealTime]);
 
-    const processFile = (file) => {
-        return new Promise((resolve) => {
-            if (!file.type.startsWith('image/')) {
-                alert(`File ${file.name} bukan gambar!`);
-                resolve(null);
-                return;
-            }
-
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const img = new Image();
-                img.src = e.target.result;
-                img.onload = () => {
-                    // Resize logic
-                    let width = img.width;
-                    let height = img.height;
-                    const maxDim = 720;
-
-                    if (width > maxDim || height > maxDim) {
-                        if (width > height) {
-                            height = Math.round((height * maxDim) / width);
-                            width = maxDim;
-                        } else {
-                            width = Math.round((width * maxDim) / height);
-                            height = maxDim;
-                        }
-                    }
-
-                    const canvas = document.createElement('canvas');
-                    const ctx = canvas.getContext('2d');
-                    canvas.width = width;
-                    canvas.height = height;
-                    ctx.drawImage(img, 0, 0, width, height);
-
-                    // Watermark
-                    const date = new Date();
-                    const timestampText = date.toLocaleString('id-ID');
-                    const fontSize = Math.max(24, Math.floor(height * 0.03));
-                    ctx.font = `bold ${fontSize}px sans-serif`;
-                    ctx.textAlign = 'right';
-                    ctx.textBaseline = 'bottom';
-                    const x = canvas.width - (fontSize * 0.5);
-                    const y = canvas.height - (fontSize * 0.5);
-
-                    // Outline
-                    ctx.strokeStyle = 'black';
-                    ctx.lineWidth = fontSize / 6;
-                    ctx.strokeText(timestampText, x, y);
-
-                    // Text
-                    ctx.fillStyle = 'white';
-                    ctx.fillText(timestampText, x, y);
-
-                    resolve(canvas.toDataURL('image/jpeg', 0.6)); // Quality reduced to 0.6
-                };
-                img.onerror = () => {
-                    alert(`Gagal memproses gambar ${file.name}`);
-                    resolve(null);
-                };
-            };
-            reader.onerror = () => resolve(null);
-            reader.readAsDataURL(file);
-        });
-    };
-
-    const handleImageUpload = async (e) => {
+    const handleImageUpload = (e) => {
         const files = Array.from(e.target.files);
         if (files.length === 0) return;
 
-        setIsProcessing(true);
-        try {
-            const promises = files.map(file => processFile(file));
-            const results = await Promise.all(promises);
-            const validImages = results.filter(img => img !== null);
-
-            if (validImages.length > 0) {
-                setImagePreviews(prev => [...prev, ...validImages]);
+        files.forEach(file => {
+            if (!file.type.startsWith('image/')) {
+                alert(`File ${file.name} bukan gambar!`);
+                return;
             }
-        } catch (error) {
-            console.error("Upload error:", error);
-            alert("Terjadi kesalahan saat memproses gambar.");
-        } finally {
-            setIsProcessing(false);
-            if (galleryInputRef.current) galleryInputRef.current.value = '';
-        }
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                setImagePreviews(prev => [...prev, ev.target.result]);
+            };
+            reader.readAsDataURL(file);
+        });
+
+        if (galleryInputRef.current) galleryInputRef.current.value = '';
     };
 
     const removeImage = (index) => {
