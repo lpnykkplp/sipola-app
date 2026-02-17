@@ -11,6 +11,7 @@ import GeneratorScreen from './screens/GeneratorScreen';
 import ProfileScreen from './screens/ProfileScreen';
 import StatisticsScreen from './screens/StatisticsScreen';
 import ReportHistoryScreen from './screens/ReportHistoryScreen';
+import AstekpamScreen from './screens/AstekpamScreen';
 
 const App = () => {
     // --- User & Screen State ---
@@ -150,6 +151,8 @@ const App = () => {
             return <StatisticsScreen setCurrentScreen={setCurrentScreen} apelHistory={apelHistory} scanHistory={scanHistory} activityLog={activityLog} />;
         case 'report-history':
             return <ReportHistoryScreen user={user} setCurrentScreen={setCurrentScreen} />;
+        case 'astekpam':
+            return <AstekpamScreen user={user} setCurrentScreen={setCurrentScreen} />;
         default:
             return <LoginScreen setUser={setUser} setCurrentScreen={setCurrentScreen} />;
     }

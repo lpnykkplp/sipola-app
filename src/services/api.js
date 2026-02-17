@@ -158,5 +158,47 @@ export const api = {
             .single();
         if (error) throw error;
         return data;
+    },
+
+    // --- ASTEKPAM LOGS ---
+    async getAstekpamLogs() {
+        const { data, error } = await supabase
+            .from('astekpam_logs')
+            .select('*')
+            .order('created_at', { ascending: false });
+        if (error) throw error;
+        return data;
+    },
+
+    async addAstekpamLog(log) {
+        const dbLog = {
+            shift: log.shift,
+            petugas_lama: log.petugasLama,
+            petugas_baru: log.petugasBaru,
+            inventaris: log.inventaris,
+            wbp_total: log.wbpTotal,
+            wbp_sakit: log.wbpSakit,
+            wbp_bon: log.wbpBon,
+            catatan: log.catatan,
+            date_iso: log.dateISO,
+            status: log.status || 'pending'
+        };
+        const { data, error } = await supabase
+            .from('astekpam_logs')
+            .insert([dbLog])
+            .select();
+        if (error) throw error;
+        return data[0];
+    },
+
+    async updateAstekpamStatus(id, status) {
+        const { data, error } = await supabase
+            .from('astekpam_logs')
+            .update({ status })
+            .eq('id', id)
+            .select()
+            .single();
+        if (error) throw error;
+        return data;
     }
 };

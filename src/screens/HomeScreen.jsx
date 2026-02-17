@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
     User, QrCode, Users, ClipboardList, PlusCircle,
-    CalendarDays, Sunrise, Sun, Moon, Eye, BarChart3, FileText
+    CalendarDays, Sunrise, Sun, Moon, Eye, BarChart3, FileText, ArrowLeftRight
 } from 'lucide-react';
 import ZoomableImageViewer from '../components/ZoomableImageViewer';
 import MenuCard from '../components/MenuCard';
@@ -213,6 +213,19 @@ const HomeScreen = ({ user, setCurrentScreen, apelHistory, activityLog }) => {
                         onClick={() => setCurrentScreen('statistics')}
                     />
                 </div>
+
+                {/* Astekpam - Rupam only */}
+                {user.name?.toLowerCase().includes('rupam') && (
+                    <div className="mt-4 pt-4 border-t border-[#2a3a4a]">
+                        <MenuCard
+                            icon={ArrowLeftRight}
+                            title="Serah Terima"
+                            desc="Astekpam Penjagaan"
+                            color="text-cyan-400"
+                            onClick={() => setCurrentScreen('astekpam')}
+                        />
+                    </div>
+                )}
 
                 {(user.role === 'Super Admin' || user.role === 'Admin' || user.name?.toLowerCase().includes('rupam')) && (
                     <div className="mt-4 pt-4 border-t border-[#2a3a4a]">
