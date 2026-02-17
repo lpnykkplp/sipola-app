@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
     User, QrCode, Users, ClipboardList, PlusCircle,
-    CalendarDays, Sunrise, Sun, Moon, Eye
+    CalendarDays, Sunrise, Sun, Moon, Eye, BarChart3
 } from 'lucide-react';
 import ZoomableImageViewer from '../components/ZoomableImageViewer';
 import MenuCard from '../components/MenuCard';
@@ -202,6 +202,17 @@ const HomeScreen = ({ user, setCurrentScreen, apelHistory, activityLog }) => {
                         />
                     </div>
                 )}
+
+                {/* Statistics card - visible to all */}
+                <div className="mt-4 pt-4 border-t border-[#2a3a4a]">
+                    <MenuCard
+                        icon={BarChart3}
+                        title="Statistik & Grafik"
+                        desc="Lihat tren data"
+                        color="text-teal-400"
+                        onClick={() => setCurrentScreen('statistics')}
+                    />
+                </div>
 
                 {user.role === 'Super Admin' && (
                     <div className="mt-4 pt-4 border-t border-[#2a3a4a]">
