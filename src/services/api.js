@@ -117,5 +117,46 @@ export const api = {
             .select();
         if (error) throw error;
         return data[0];
+    },
+
+    // --- SENT REPORTS ---
+    async getReports() {
+        const { data, error } = await supabase
+            .from('sent_reports')
+            .select('*')
+            .order('created_at', { ascending: false });
+        if (error) throw error;
+        return data;
+    },
+
+    async addReport(report) {
+        const dbReport = {
+            sender_name: report.senderName,
+            petugas_jaga: report.petugasJaga,
+            report_date: report.date,
+            date_formatted: report.dateFormatted,
+            wbp_count: report.wbpCount,
+            activities_count: report.activitiesCount,
+            activities_summary: report.activitiesSummary,
+            status: report.status || 'pending',
+            sent_at: report.sentAt
+        };
+        const { data, error } = await supabase
+            .from('sent_reports')
+            .insert([dbReport])
+            .select();
+        if (error) throw error;
+        return data[0];
+    },
+
+    async updateReportStatus(id, status) {
+        const { data, error } = await supabase
+            .from('sent_reports')
+            .update({ status })
+            .eq('id', id)
+            .select()
+            .single();
+        if (error) throw error;
+        return data;
     }
 };

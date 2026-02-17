@@ -1,11 +1,11 @@
 import { api } from '../services/api';
-import React, { useState, useRef } from 'react';
-import { Save, Trash2, Eye, History, CalendarDays, Image, Loader2 } from 'lucide-react';
+import React, { useState, useRef, useMemo } from 'react';
+import { Save, Trash2, Eye, History, CalendarDays, Image, Loader2, FileText, X, Download, Send, CheckCircle, Edit3 } from 'lucide-react';
 import ZoomableImageViewer from '../components/ZoomableImageViewer';
 import Header from '../components/Header';
 import GlassCard from '../components/GlassCard';
 
-const ActivityScreen = ({ user, setCurrentScreen, setActivityLog, activityLog, refreshData }) => {
+const ActivityScreen = ({ user, setCurrentScreen, setActivityLog, activityLog, apelHistory = [], refreshData }) => {
     const [desc, setDesc] = useState('');
     const [time, setTime] = useState(new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }));
     const [isRealTime, setIsRealTime] = useState(true);
@@ -14,6 +14,20 @@ const ActivityScreen = ({ user, setCurrentScreen, setActivityLog, activityLog, r
     const [viewImage, setViewImage] = useState(null);
     const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
     const [isProcessing, setIsProcessing] = useState(false);
+    const [showReportPreview, setShowReportPreview] = useState(false);
+    const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+    const [isSending, setIsSending] = useState(false);
+    const [sendSuccess, setSendSuccess] = useState(false);
+    const [petugasJaga, setPetugasJaga] = useState(user?.name || '');
+
+    const isRupam = user?.name?.toLowerCase().includes('rupam');
+
+    // Reset petugasJaga when preview opens
+    const openReportPreview = () => {
+        setPetugasJaga(user?.name || '');
+        setSendSuccess(false);
+        setShowReportPreview(true);
+    };
 
     // Real-time Clock Sync
     React.useEffect(() => {
@@ -38,7 +52,6 @@ const ActivityScreen = ({ user, setCurrentScreen, setActivityLog, activityLog, r
             const reader = new FileReader();
             reader.onload = (ev) => {
                 const dataUrl = ev.target.result;
-                // Only compress if file >= 5MB
                 if (file.size >= 5 * 1024 * 1024) {
                     const img = new window.Image();
                     img.onload = () => {
@@ -101,6 +114,209 @@ const ActivityScreen = ({ user, setCurrentScreen, setActivityLog, activityLog, r
 
     const filteredActivities = getFilteredActivities();
 
+    // --- Report data ---
+    const reportDate = useMemo(() => {
+        const d = new Date(selectedDate + 'T00:00:00');
+        const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+        const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+        return {
+            hari: days[d.getDay()],
+            tanggal: `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`,
+            full: `${days[d.getDay()]}, ${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`
+        };
+    }, [selectedDate]);
+
+    const latestWbpCount = useMemo(() => {
+        const dayApels = apelHistory.filter(a => a.dateISO === selectedDate);
+        if (dayApels.length === 0) return '-';
+        const latest = dayApels.sort((a, b) => (b.time || '').localeCompare(a.time || ''))[0];
+        return latest?.total || '-';
+    }, [selectedDate, apelHistory]);
+
+    // --- PDF Generation (returns base64) ---
+    const buildPdf = async () => {
+        const { jsPDF } = await import('jspdf');
+        const doc = new jsPDF('p', 'mm', 'a4');
+        const pageW = doc.internal.pageSize.getWidth();
+        const margin = 20;
+        const contentW = pageW - margin * 2;
+        let y = 20;
+
+        const addNewPageIfNeeded = (needed) => {
+            if (y + needed > doc.internal.pageSize.getHeight() - 20) {
+                doc.addPage();
+                y = 20;
+            }
+        };
+
+        // === KOP SURAT ===
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(14);
+        doc.text('KEMENTERIAN IMIGRASI DAN PEMASYARAKATAN', pageW / 2, y, { align: 'center' });
+        y += 7;
+        doc.setFontSize(13);
+        doc.text('LAPAS NARKOTIKA KELAS IIA YOGYAKARTA', pageW / 2, y, { align: 'center' });
+        y += 6;
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(9);
+        doc.text('Jl. Kaliurang Km. 17, Pakembinangun, Pakem, Sleman, D.I. Yogyakarta', pageW / 2, y, { align: 'center' });
+        y += 5;
+
+        doc.setDrawColor(0);
+        doc.setLineWidth(0.8);
+        doc.line(margin, y, pageW - margin, y);
+        y += 2;
+        doc.setLineWidth(0.3);
+        doc.line(margin, y, pageW - margin, y);
+        y += 10;
+
+        // === JUDUL ===
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(13);
+        doc.text('LAPORAN KEGIATAN POS ANTARA', pageW / 2, y, { align: 'center' });
+        y += 10;
+
+        // === INFO HEADER ===
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(10);
+
+        const infoItems = [
+            ['Hari / Tanggal', reportDate.full],
+            ['Petugas Jaga', petugasJaga],
+            ['Jumlah WBP', latestWbpCount === '-' ? 'Belum ada data apel' : `${latestWbpCount} orang`],
+        ];
+
+        infoItems.forEach(([label, value]) => {
+            doc.setFont('helvetica', 'bold');
+            doc.text(`${label}`, margin, y);
+            doc.setFont('helvetica', 'normal');
+            doc.text(`: ${value}`, margin + 40, y);
+            y += 6;
+        });
+
+        y += 6;
+
+        // === TABLE ===
+        const colNo = 10;
+        const colTime = 22;
+        const colDesc = contentW - colNo - colTime;
+
+        doc.setFillColor(44, 62, 80);
+        doc.rect(margin, y, contentW, 8, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(9);
+        doc.text('No', margin + colNo / 2, y + 5.5, { align: 'center' });
+        doc.text('Waktu', margin + colNo + colTime / 2, y + 5.5, { align: 'center' });
+        doc.text('Uraian Kegiatan', margin + colNo + colTime + 4, y + 5.5);
+        doc.setTextColor(0, 0, 0);
+        y += 8;
+
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(9);
+
+        const activities = filteredActivities;
+
+        if (activities.length === 0) {
+            addNewPageIfNeeded(10);
+            doc.setFillColor(245, 245, 245);
+            doc.rect(margin, y, contentW, 8, 'F');
+            doc.setFont('helvetica', 'italic');
+            doc.text('Tidak ada kegiatan pada tanggal ini', pageW / 2, y + 5.5, { align: 'center' });
+            y += 8;
+        } else {
+            activities.forEach((item, idx) => {
+                const descLines = doc.splitTextToSize(item.desc || '-', colDesc - 6);
+                const rowH = Math.max(8, descLines.length * 4.5 + 3);
+                addNewPageIfNeeded(rowH);
+
+                if (idx % 2 === 0) {
+                    doc.setFillColor(248, 249, 250);
+                    doc.rect(margin, y, contentW, rowH, 'F');
+                }
+
+                doc.setDrawColor(200, 200, 200);
+                doc.setLineWidth(0.2);
+                doc.rect(margin, y, contentW, rowH);
+                doc.line(margin + colNo, y, margin + colNo, y + rowH);
+                doc.line(margin + colNo + colTime, y, margin + colNo + colTime, y + rowH);
+
+                doc.setFont('helvetica', 'normal');
+                doc.text(`${idx + 1}`, margin + colNo / 2, y + 5, { align: 'center' });
+                doc.text(item.time || '-', margin + colNo + colTime / 2, y + 5, { align: 'center' });
+                doc.text(descLines, margin + colNo + colTime + 3, y + 5);
+
+                y += rowH;
+            });
+        }
+
+        y += 12;
+
+        // === FOOTER / TTD ===
+        addNewPageIfNeeded(40);
+        const ttdX = pageW - margin - 60;
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(10);
+        doc.text(`Yogyakarta, ${reportDate.tanggal}`, ttdX, y);
+        y += 5;
+        doc.text('Petugas Jaga,', ttdX, y);
+        y += 25;
+        doc.setFont('helvetica', 'bold');
+        doc.text(petugasJaga, ttdX, y);
+        y += 5;
+        doc.setFont('helvetica', 'normal');
+        doc.setLineWidth(0.5);
+        doc.line(ttdX, y - 1, ttdX + 50, y - 1);
+
+        return doc;
+    };
+
+    // --- Download PDF ---
+    const downloadPdf = async () => {
+        setIsGeneratingPdf(true);
+        try {
+            const doc = await buildPdf();
+            const fileName = `Laporan_PosAntara_${selectedDate}_${petugasJaga.replace(/\s+/g, '_')}.pdf`;
+            doc.save(fileName);
+        } catch (err) {
+            console.error('PDF generation error:', err);
+            alert('Gagal membuat PDF: ' + err.message);
+        } finally {
+            setIsGeneratingPdf(false);
+        }
+    };
+
+    // --- Send Report to Admin (via Supabase) ---
+    const sendReport = async () => {
+        setIsSending(true);
+        try {
+            const report = {
+                senderName: user.name,
+                petugasJaga,
+                date: selectedDate,
+                dateFormatted: reportDate.full,
+                wbpCount: String(latestWbpCount),
+                activitiesCount: filteredActivities.length,
+                activitiesSummary: filteredActivities.map(a => ({ time: a.time, desc: a.desc })),
+                sentAt: new Date().toISOString(),
+                status: 'pending'
+            };
+
+            await api.addReport(report);
+
+            setSendSuccess(true);
+            setTimeout(() => {
+                setShowReportPreview(false);
+                setSendSuccess(false);
+            }, 2000);
+        } catch (err) {
+            console.error('Send report error:', err);
+            alert('Gagal mengirim laporan: ' + err.message);
+        } finally {
+            setIsSending(false);
+        }
+    };
+
     return (
         <div className="min-h-screen bg-[#0f1729] font-sans flex flex-col">
             <div className="bg-[#1a2332] p-6 pt-8 border-b border-[#2a3a4a] sticky top-0 z-20">
@@ -109,6 +325,155 @@ const ActivityScreen = ({ user, setCurrentScreen, setActivityLog, activityLog, r
 
             {viewImage && (
                 <ZoomableImageViewer src={viewImage} onClose={() => setViewImage(null)} />
+            )}
+
+            {/* Report Preview Modal */}
+            {showReportPreview && (
+                <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-sm flex items-center justify-center p-4">
+                    <div className="bg-[#1a2332] border border-[#2a3a4a] rounded-3xl w-full max-w-md max-h-[90vh] flex flex-col shadow-2xl shadow-black/50 animate-fade-in-up">
+                        {/* Modal Header */}
+                        <div className="flex items-center justify-between p-5 border-b border-[#2a3a4a]">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 bg-teal-500/10 rounded-xl flex items-center justify-center border border-teal-500/20">
+                                    <FileText size={20} className="text-teal-400" />
+                                </div>
+                                <div>
+                                    <h3 className="font-bold text-slate-100 text-sm">Preview Laporan</h3>
+                                    <p className="text-[10px] text-slate-500">Periksa sebelum mengirim</p>
+                                </div>
+                            </div>
+                            <button onClick={() => setShowReportPreview(false)} className="w-8 h-8 bg-[#0d1420] border border-[#2a3a4a] rounded-full flex items-center justify-center text-slate-400 hover:text-white transition">
+                                <X size={16} />
+                            </button>
+                        </div>
+
+                        {/* Success overlay */}
+                        {sendSuccess && (
+                            <div className="absolute inset-0 z-10 bg-[#1a2332]/95 rounded-3xl flex flex-col items-center justify-center gap-4 animate-fade-in-up">
+                                <div className="w-20 h-20 bg-green-500/20 rounded-full flex items-center justify-center border-2 border-green-500/50">
+                                    <CheckCircle size={40} className="text-green-400" />
+                                </div>
+                                <h3 className="font-bold text-green-400 text-lg">Laporan Terkirim!</h3>
+                                <p className="text-slate-400 text-sm text-center">Laporan berhasil dikirim ke Admin</p>
+                            </div>
+                        )}
+
+                        {/* Modal Body - Report Preview */}
+                        <div className="flex-1 overflow-y-auto p-5">
+                            {/* Editable Petugas Jaga */}
+                            <div className="mb-4 bg-[#0d1420] border border-[#2a3a4a] rounded-xl p-3">
+                                <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1.5 flex items-center gap-1">
+                                    <Edit3 size={10} /> Nama Petugas Jaga (dapat diubah)
+                                </label>
+                                <input
+                                    type="text"
+                                    value={petugasJaga}
+                                    onChange={e => setPetugasJaga(e.target.value)}
+                                    className="w-full bg-[#1a2332] border border-[#2a3a4a] rounded-lg px-3 py-2 text-sm text-slate-200 font-bold focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                                    placeholder="Masukkan nama petugas jaga"
+                                />
+                            </div>
+
+                            {/* Simulated PDF preview */}
+                            <div className="bg-white rounded-2xl p-5 text-slate-900 shadow-inner">
+                                {/* Kop */}
+                                <div className="text-center border-b-2 border-slate-800 pb-3 mb-4">
+                                    <p className="font-bold text-[10px] leading-tight">KEMENTERIAN IMIGRASI DAN PEMASYARAKATAN</p>
+                                    <p className="font-bold text-sm leading-tight mt-0.5">LAPAS NARKOTIKA KELAS IIA YOGYAKARTA</p>
+                                    <p className="text-[8px] text-slate-500 mt-1">Jl. Kaliurang Km. 17, Pakembinangun, Pakem, Sleman</p>
+                                </div>
+
+                                <h4 className="text-center font-bold text-sm mb-3">LAPORAN KEGIATAN POS ANTARA</h4>
+
+                                {/* Info */}
+                                <div className="text-[10px] space-y-1 mb-3">
+                                    <div className="flex">
+                                        <span className="w-24 font-bold">Hari / Tanggal</span>
+                                        <span>: {reportDate.full}</span>
+                                    </div>
+                                    <div className="flex">
+                                        <span className="w-24 font-bold">Petugas Jaga</span>
+                                        <span>: {petugasJaga}</span>
+                                    </div>
+                                    <div className="flex">
+                                        <span className="w-24 font-bold">Jumlah WBP</span>
+                                        <span>: {latestWbpCount === '-' ? 'Belum ada data apel' : `${latestWbpCount} orang`}</span>
+                                    </div>
+                                </div>
+
+                                {/* Table */}
+                                <table className="w-full text-[9px] border-collapse mb-4">
+                                    <thead>
+                                        <tr className="bg-slate-800 text-white">
+                                            <th className="border border-slate-300 px-1 py-1.5 w-6 text-center">No</th>
+                                            <th className="border border-slate-300 px-1 py-1.5 w-12 text-center">Waktu</th>
+                                            <th className="border border-slate-300 px-2 py-1.5 text-left">Uraian Kegiatan</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {filteredActivities.length === 0 ? (
+                                            <tr>
+                                                <td colSpan="3" className="border border-slate-200 px-2 py-3 text-center text-slate-400 italic">
+                                                    Tidak ada kegiatan pada tanggal ini
+                                                </td>
+                                            </tr>
+                                        ) : (
+                                            filteredActivities.map((item, idx) => (
+                                                <tr key={item.id} className={idx % 2 === 0 ? 'bg-slate-50' : ''}>
+                                                    <td className="border border-slate-200 px-1 py-1.5 text-center">{idx + 1}</td>
+                                                    <td className="border border-slate-200 px-1 py-1.5 text-center font-mono">{item.time}</td>
+                                                    <td className="border border-slate-200 px-2 py-1.5">{item.desc}</td>
+                                                </tr>
+                                            ))
+                                        )}
+                                    </tbody>
+                                </table>
+
+                                {/* TTD */}
+                                <div className="text-right text-[9px] mr-4 mt-4">
+                                    <p>Yogyakarta, {reportDate.tanggal}</p>
+                                    <p>Petugas Jaga,</p>
+                                    <div className="h-12"></div>
+                                    <p className="font-bold underline">{petugasJaga}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Modal Footer */}
+                        <div className="p-5 border-t border-[#2a3a4a] space-y-3">
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={downloadPdf}
+                                    disabled={isGeneratingPdf || isSending}
+                                    className="flex-1 py-3 bg-[#0d1420] border border-[#2a3a4a] rounded-2xl text-slate-300 font-bold text-sm flex items-center justify-center gap-2 hover:bg-[#243044] transition disabled:opacity-50"
+                                >
+                                    {isGeneratingPdf ? (
+                                        <><Loader2 size={14} className="animate-spin" /> PDF...</>
+                                    ) : (
+                                        <><Download size={14} /> Unduh PDF</>
+                                    )}
+                                </button>
+                                <button
+                                    onClick={sendReport}
+                                    disabled={isSending || isGeneratingPdf || !petugasJaga.trim()}
+                                    className="flex-1 py-3 bg-gradient-to-r from-teal-500 to-cyan-500 text-white font-bold text-sm rounded-2xl flex items-center justify-center gap-2 hover:from-teal-400 hover:to-cyan-400 transition shadow-lg shadow-teal-500/20 disabled:opacity-50"
+                                >
+                                    {isSending ? (
+                                        <><Loader2 size={14} className="animate-spin" /> Mengirim...</>
+                                    ) : (
+                                        <><Send size={14} /> Kirim ke Admin</>
+                                    )}
+                                </button>
+                            </div>
+                            <button
+                                onClick={() => setShowReportPreview(false)}
+                                className="w-full py-2.5 text-slate-500 font-bold text-xs hover:text-slate-300 transition"
+                            >
+                                Batal
+                            </button>
+                        </div>
+                    </div>
+                </div>
             )}
 
             <div className="p-6 flex-1 overflow-y-auto">
@@ -195,7 +560,7 @@ const ActivityScreen = ({ user, setCurrentScreen, setActivityLog, activityLog, r
                         />
                     </div>
                 </div>
-                <div className="space-y-4 pb-20">
+                <div className="space-y-4 pb-6">
                     {filteredActivities.length === 0 ? (
                         <p className="text-center text-slate-500 text-sm italic py-4 bg-[#1a2332] rounded-xl border border-[#2a3a4a]">Belum ada kegiatan pada tanggal ini.</p>
                     ) : (
@@ -235,6 +600,19 @@ const ActivityScreen = ({ user, setCurrentScreen, setActivityLog, activityLog, r
                         ))
                     )}
                 </div>
+
+                {/* Kirim Laporan button - only for Rupam accounts */}
+                {isRupam && (
+                    <div className="mt-2 pb-10">
+                        <button
+                            onClick={openReportPreview}
+                            className="w-full py-4 bg-gradient-to-r from-purple-600 to-purple-500 text-white font-bold rounded-2xl flex items-center justify-center gap-2 active:scale-95 transition shadow-lg shadow-purple-500/20 hover:from-purple-500 hover:to-purple-400"
+                        >
+                            <Send size={18} />
+                            Kirim Laporan ke Admin
+                        </button>
+                    </div>
+                )}
             </div>
         </div>
     );

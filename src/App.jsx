@@ -10,6 +10,7 @@ import ActivityScreen from './screens/ActivityScreen';
 import GeneratorScreen from './screens/GeneratorScreen';
 import ProfileScreen from './screens/ProfileScreen';
 import StatisticsScreen from './screens/StatisticsScreen';
+import ReportHistoryScreen from './screens/ReportHistoryScreen';
 
 const App = () => {
     // --- User & Screen State ---
@@ -140,13 +141,15 @@ const App = () => {
                 />
             );
         case 'activity':
-            return <ActivityScreen user={user} setCurrentScreen={setCurrentScreen} activityLog={activityLog} setActivityLog={setActivityLog} refreshData={loadData} />;
+            return <ActivityScreen user={user} setCurrentScreen={setCurrentScreen} activityLog={activityLog} setActivityLog={setActivityLog} apelHistory={apelHistory} refreshData={loadData} />;
         case 'generator':
             return <GeneratorScreen user={user} setCurrentScreen={setCurrentScreen} qrDatabase={qrDatabase} setQrDatabase={setQrDatabase} refreshData={loadData} />;
         case 'profile':
             return <ProfileScreen user={user} setUser={setUser} setCurrentScreen={setCurrentScreen} />;
         case 'statistics':
             return <StatisticsScreen setCurrentScreen={setCurrentScreen} apelHistory={apelHistory} scanHistory={scanHistory} activityLog={activityLog} />;
+        case 'report-history':
+            return <ReportHistoryScreen setCurrentScreen={setCurrentScreen} />;
         default:
             return <LoginScreen setUser={setUser} setCurrentScreen={setCurrentScreen} />;
     }
