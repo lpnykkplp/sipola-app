@@ -9,9 +9,11 @@ const RUPAM_ACCOUNTS = ['RUPAM I', 'RUPAM II', 'RUPAM III', 'RUPAM IV'];
 const INVENTARIS_ITEMS = [
     { key: 'ht', label: 'HT (Handie Talkie)', options: ['Baik', 'Rusak', 'Tidak Ada'] },
     { key: 'kunci_blok', label: 'Kunci Blok', options: ['Lengkap', 'Kurang', 'Tidak Ada'] },
-    { key: 'borgol', label: 'Borgol', options: ['Baik', 'Rusak', 'Tidak Ada'] },
     { key: 'senter', label: 'Senter', options: ['Baik', 'Rusak', 'Tidak Ada'] },
     { key: 'buku_jaga', label: 'Buku Jaga', options: ['Ada', 'Tidak Ada'] },
+    { key: 'televisi', label: 'Televisi', options: ['Baik', 'Rusak', 'Tidak Ada'] },
+    { key: 'dispenser', label: 'Dispenser', options: ['Baik', 'Rusak', 'Tidak Ada'] },
+    { key: 'kipas_angin', label: 'Kipas Angin', options: ['Baik', 'Rusak', 'Tidak Ada'] },
 ];
 
 const DEFAULT_INVENTARIS = Object.fromEntries(INVENTARIS_ITEMS.map(i => [i.key, i.options[0]]));
