@@ -94,29 +94,9 @@ const ReportHistoryScreen = ({ user, setCurrentScreen }) => {
                 }
             };
 
-            // KOP SURAT
-            doc.setFont('helvetica', 'bold');
-            doc.setFontSize(14);
-            doc.text('KEMENTERIAN IMIGRASI DAN PEMASYARAKATAN', pageW / 2, y, { align: 'center' });
-            y += 7;
-            doc.setFontSize(13);
-            doc.text('LAPAS NARKOTIKA KELAS IIA YOGYAKARTA', pageW / 2, y, { align: 'center' });
-            y += 6;
-            doc.setFont('helvetica', 'normal');
-            doc.setFontSize(9);
-            doc.text('Jl. Kaliurang Km. 17, Pakembinangun, Pakem, Sleman, D.I. Yogyakarta', pageW / 2, y, { align: 'center' });
-            y += 5;
-            doc.setDrawColor(0);
-            doc.setLineWidth(0.8);
-            doc.line(margin, y, pageW - margin, y);
-            y += 2;
-            doc.setLineWidth(0.3);
-            doc.line(margin, y, pageW - margin, y);
-            y += 10;
-
             // JUDUL
             doc.setFont('helvetica', 'bold');
-            doc.setFontSize(13);
+            doc.setFontSize(14);
             doc.text('LAPORAN KEGIATAN POS ANTARA', pageW / 2, y, { align: 'center' });
             y += 10;
 

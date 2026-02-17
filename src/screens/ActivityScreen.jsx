@@ -149,30 +149,9 @@ const ActivityScreen = ({ user, setCurrentScreen, setActivityLog, activityLog, a
             }
         };
 
-        // === KOP SURAT ===
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(14);
-        doc.text('KEMENTERIAN IMIGRASI DAN PEMASYARAKATAN', pageW / 2, y, { align: 'center' });
-        y += 7;
-        doc.setFontSize(13);
-        doc.text('LAPAS NARKOTIKA KELAS IIA YOGYAKARTA', pageW / 2, y, { align: 'center' });
-        y += 6;
-        doc.setFont('helvetica', 'normal');
-        doc.setFontSize(9);
-        doc.text('Jl. Kaliurang Km. 17, Pakembinangun, Pakem, Sleman, D.I. Yogyakarta', pageW / 2, y, { align: 'center' });
-        y += 5;
-
-        doc.setDrawColor(0);
-        doc.setLineWidth(0.8);
-        doc.line(margin, y, pageW - margin, y);
-        y += 2;
-        doc.setLineWidth(0.3);
-        doc.line(margin, y, pageW - margin, y);
-        y += 10;
-
         // === JUDUL ===
         doc.setFont('helvetica', 'bold');
-        doc.setFontSize(13);
+        doc.setFontSize(14);
         doc.text('LAPORAN KEGIATAN POS ANTARA', pageW / 2, y, { align: 'center' });
         y += 10;
 
@@ -376,13 +355,6 @@ const ActivityScreen = ({ user, setCurrentScreen, setActivityLog, activityLog, a
 
                             {/* Simulated PDF preview */}
                             <div className="bg-white rounded-2xl p-5 text-slate-900 shadow-inner">
-                                {/* Kop */}
-                                <div className="text-center border-b-2 border-slate-800 pb-3 mb-4">
-                                    <p className="font-bold text-[10px] leading-tight">KEMENTERIAN IMIGRASI DAN PEMASYARAKATAN</p>
-                                    <p className="font-bold text-sm leading-tight mt-0.5">LAPAS NARKOTIKA KELAS IIA YOGYAKARTA</p>
-                                    <p className="text-[8px] text-slate-500 mt-1">Jl. Kaliurang Km. 17, Pakembinangun, Pakem, Sleman</p>
-                                </div>
-
                                 <h4 className="text-center font-bold text-sm mb-3">LAPORAN KEGIATAN POS ANTARA</h4>
 
                                 {/* Info */}
