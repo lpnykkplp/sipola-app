@@ -7,7 +7,7 @@ import GlassCard from '../components/GlassCard';
 const ActivityScreen = ({ user, setCurrentScreen, setActivityLog, activityLog, refreshData }) => {
     const [desc, setDesc] = useState('');
     const [time, setTime] = useState(new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }));
-    const [isRealTime, setIsRealTime] = useState(true); // Default to auto-update
+    const [isRealTime, setIsRealTime] = useState(true);
     const [imagePreviews, setImagePreviews] = useState([]);
     const galleryInputRef = useRef(null);
     const [viewImage, setViewImage] = useState(null);
@@ -81,7 +81,7 @@ const ActivityScreen = ({ user, setCurrentScreen, setActivityLog, activityLog, r
                 images: imagePreviews,
                 dateISO: todayISO
             });
-            refreshData(); // Fetch latest from DB
+            refreshData();
             setDesc('');
             setImagePreviews([]);
         } catch (e) {
@@ -89,7 +89,6 @@ const ActivityScreen = ({ user, setCurrentScreen, setActivityLog, activityLog, r
         }
     };
 
-    // Filter activities by selected date and sort newest first
     const getFilteredActivities = () => {
         return activityLog
             .filter(item => item.dateISO === selectedDate)
@@ -102,8 +101,8 @@ const ActivityScreen = ({ user, setCurrentScreen, setActivityLog, activityLog, r
     const filteredActivities = getFilteredActivities();
 
     return (
-        <div className="min-h-screen bg-slate-50 font-sans flex flex-col">
-            <div className="bg-white p-6 pt-8 border-b border-slate-100 sticky top-0 z-20">
+        <div className="min-h-screen bg-[#0f1729] font-sans flex flex-col">
+            <div className="bg-[#1a2332] p-6 pt-8 border-b border-[#2a3a4a] sticky top-0 z-20">
                 <Header title="Pos Antara" subtitle="Catatan Kegiatan" onBack={() => setCurrentScreen('home')} />
             </div>
 
@@ -120,35 +119,35 @@ const ActivityScreen = ({ user, setCurrentScreen, setActivityLog, activityLog, r
                 <GlassCard className="p-5 mb-8">
                     <form onSubmit={save}>
                         <div className="mb-4">
-                            <label className="block text-xs font-bold text-slate-400 uppercase mb-2">Waktu</label>
+                            <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Waktu</label>
                             <input
                                 type="time"
                                 value={time}
                                 onChange={e => {
                                     setTime(e.target.value);
-                                    setIsRealTime(false); // Disable auto-update if user edits
+                                    setIsRealTime(false);
                                 }}
-                                className={`w-full bg-slate-50 border-none rounded-xl p-3 font-bold text-slate-700 focus:ring-2 focus:ring-orange-400 ${isRealTime ? 'opacity-70' : ''}`}
+                                className={`w-full bg-[#0d1420] border border-[#2a3a4a] rounded-xl p-3 font-bold text-slate-200 focus:ring-2 focus:ring-teal-500 ${isRealTime ? 'opacity-70' : ''}`}
                             />
                         </div>
                         <div className="mb-4">
-                            <label className="block text-xs font-bold text-slate-400 uppercase mb-2">Uraian Kegiatan</label>
+                            <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Uraian Kegiatan</label>
                             <textarea
                                 rows="3"
                                 value={desc}
                                 onChange={e => setDesc(e.target.value)}
-                                className="w-full bg-slate-50 border-none rounded-xl p-3 text-slate-700 focus:ring-2 focus:ring-orange-400"
+                                className="w-full bg-[#0d1420] border border-[#2a3a4a] rounded-xl p-3 text-slate-200 focus:ring-2 focus:ring-teal-500 placeholder-slate-600"
                                 placeholder="Jelaskan aktivitas..."
                             ></textarea>
                         </div>
                         <div className="mb-4">
-                            <label className="block text-xs font-bold text-slate-400 uppercase mb-2">Dokumentasi Foto</label>
+                            <label className="block text-xs font-bold text-slate-500 uppercase mb-2">Dokumentasi Foto</label>
                             <input type="file" accept="image/*" multiple ref={galleryInputRef} className="hidden" onChange={handleImageUpload} />
 
                             <button
                                 type="button"
                                 onClick={() => galleryInputRef.current.click()}
-                                className="w-full py-4 border-2 border-dashed border-slate-300 rounded-2xl text-slate-400 font-bold hover:border-orange-400 hover:text-orange-500 hover:bg-orange-50 transition flex flex-col items-center justify-center bg-slate-50 mb-3"
+                                className="w-full py-4 border-2 border-dashed border-[#2a3a4a] rounded-2xl text-slate-500 font-bold hover:border-teal-500/50 hover:text-teal-400 hover:bg-teal-500/5 transition flex flex-col items-center justify-center bg-[#0d1420] mb-3"
                             >
                                 <Image className="mb-2" size={24} />
                                 <span>Pilih Foto dari Galeri</span>
@@ -156,8 +155,8 @@ const ActivityScreen = ({ user, setCurrentScreen, setActivityLog, activityLog, r
 
                             {isProcessing && (
                                 <div className="flex justify-center my-4">
-                                    <div className="flex items-center space-x-2 text-slate-500 text-sm font-bold bg-slate-100 px-4 py-2 rounded-full animate-pulse">
-                                        <Loader2 className="animate-spin text-orange-500" size={16} />
+                                    <div className="flex items-center space-x-2 text-slate-400 text-sm font-bold bg-[#0d1420] px-4 py-2 rounded-full animate-pulse border border-[#2a3a4a]">
+                                        <Loader2 className="animate-spin text-teal-400" size={16} />
                                         <span>Memproses gambar...</span>
                                     </div>
                                 </div>
@@ -166,7 +165,7 @@ const ActivityScreen = ({ user, setCurrentScreen, setActivityLog, activityLog, r
                             {imagePreviews.length > 0 && (
                                 <div className="grid grid-cols-2 gap-3">
                                     {imagePreviews.map((img, idx) => (
-                                        <div key={idx} className="relative rounded-xl overflow-hidden border border-slate-200 group h-32">
+                                        <div key={idx} className="relative rounded-xl overflow-hidden border border-[#2a3a4a] group h-32">
                                             <img src={img} alt={`Preview ${idx}`} className="w-full h-full object-cover" />
                                             <button
                                                 type="button"
@@ -180,54 +179,54 @@ const ActivityScreen = ({ user, setCurrentScreen, setActivityLog, activityLog, r
                                 </div>
                             )}
                         </div>
-                        <button className="w-full bg-gradient-to-r from-orange-500 to-pink-500 text-white font-bold py-4 rounded-2xl active:scale-95 transition flex items-center justify-center">
+                        <button className="w-full bg-gradient-to-r from-teal-500 to-cyan-500 text-white font-bold py-4 rounded-2xl active:scale-95 transition flex items-center justify-center shadow-lg shadow-teal-500/20">
                             <Save size={20} className="mr-2" /> Simpan Laporan
                         </button>
                     </form>
                 </GlassCard>
 
                 <div className="flex items-center justify-between mb-4">
-                    <h3 className="font-bold text-slate-800 flex items-center text-sm uppercase tracking-wider">
-                        <History size={18} className="mr-2 text-slate-400" /> Riwayat Kegiatan
+                    <h3 className="font-bold text-slate-300 flex items-center text-sm uppercase tracking-wider">
+                        <History size={18} className="mr-2 text-slate-500" /> Riwayat Kegiatan
                     </h3>
                     <div className="flex items-center gap-2">
-                        <CalendarDays className="w-4 h-4 text-slate-400" />
+                        <CalendarDays className="w-4 h-4 text-slate-500" />
                         <input
                             type="date"
                             value={selectedDate}
                             onChange={(e) => setSelectedDate(e.target.value)}
-                            className="text-xs font-bold text-slate-500 bg-white border border-slate-200 rounded-lg p-1.5 focus:ring-1 focus:ring-orange-400"
+                            className="text-xs font-bold text-slate-400 bg-[#0d1420] border border-[#2a3a4a] rounded-lg p-1.5 focus:ring-1 focus:ring-teal-500"
                         />
                     </div>
                 </div>
                 <div className="space-y-4 pb-20">
                     {filteredActivities.length === 0 ? (
-                        <p className="text-center text-slate-400 text-sm italic py-4 bg-slate-100 rounded-xl">Belum ada kegiatan pada tanggal ini.</p>
+                        <p className="text-center text-slate-500 text-sm italic py-4 bg-[#1a2332] rounded-xl border border-[#2a3a4a]">Belum ada kegiatan pada tanggal ini.</p>
                     ) : (
                         filteredActivities.map(l => (
-                            <div key={l.id} className="flex relative pl-6 pb-6 last:pb-0 border-l-2 border-slate-200 ml-3">
-                                <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-orange-500 border-4 border-white"></div>
+                            <div key={l.id} className="flex relative pl-6 pb-6 last:pb-0 border-l-2 border-[#2a3a4a] ml-3">
+                                <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-teal-400 border-4 border-[#0f1729]"></div>
                                 <div className="w-full">
                                     <div className="flex justify-between items-start mb-1">
                                         <div>
-                                            <span className="text-xs font-bold text-slate-400 mr-2">{l.time}</span>
+                                            <span className="text-xs font-bold text-slate-500 mr-2">{l.time}</span>
                                         </div>
-                                        <span className="text-[10px] font-bold bg-slate-100 px-2 py-0.5 rounded text-slate-500 border border-slate-200">
+                                        <span className="text-[10px] font-bold bg-[#0d1420] px-2 py-0.5 rounded text-slate-500 border border-[#2a3a4a]">
                                             Oleh: {l.user}
                                         </span>
                                     </div>
-                                    <div className="bg-white p-4 rounded-2xl border border-slate-100">
-                                        <p className="text-sm text-slate-700 leading-relaxed font-medium">{l.desc}</p>
+                                    <div className="bg-[#1a2332] p-4 rounded-2xl border border-[#2a3a4a] hover:border-teal-500/20 transition-all">
+                                        <p className="text-sm text-slate-300 leading-relaxed font-medium">{l.desc}</p>
                                         {l.images && l.images.length > 0 && (
                                             <div className="mt-3 grid grid-cols-2 gap-2">
                                                 {l.images.map((img, i) => (
                                                     <button
                                                         key={i}
                                                         onClick={() => setViewImage(img)}
-                                                        className="rounded-xl overflow-hidden border border-slate-100 h-24 relative group"
+                                                        className="rounded-xl overflow-hidden border border-[#2a3a4a] h-24 relative group hover:border-teal-500/30 transition-all"
                                                     >
                                                         <img src={img} alt="Bukti" className="w-full h-full object-cover transition-transform group-hover:scale-105" />
-                                                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
+                                                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
                                                             <Eye className="text-white opacity-0 group-hover:opacity-100 drop-shadow-md" size={20} />
                                                         </div>
                                                     </button>
