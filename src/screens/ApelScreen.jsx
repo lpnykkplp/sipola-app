@@ -74,25 +74,19 @@ const ApelScreen = ({ user, setCurrentScreen, apelHistory, setApelHistory, apelI
             <div className="flex-1 overflow-y-auto p-6 pb-48">
                 {viewMode === 'input' ? (
                     <div className="space-y-4">
-                        {/* Tanggal + Shift in one row */}
-                        <div className="flex items-center gap-3 bg-[#1a2332] p-3 rounded-2xl border border-[#2a3a4a]">
-                            <div className="w-9 h-9 bg-[#0d1420] rounded-xl flex items-center justify-center text-purple-400 border border-purple-500/20 flex-shrink-0">
-                                <CalendarDays size={16} />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                                <p className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">Hari / Tanggal</p>
-                                <p className="text-xs font-bold text-slate-200 truncate">{todayFormatted}</p>
-                            </div>
-                            <div className="flex gap-1 flex-shrink-0">
+                        {/* Shift Selection */}
+                        <div className="flex items-center justify-between bg-[#1a2332] p-3 rounded-2xl border border-[#2a3a4a]">
+                            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Shift Jaga</span>
+                            <div className="flex gap-1">
                                 {['Pagi', 'Siang', 'Malam'].map(s => (
                                     <button
                                         key={s}
                                         onClick={() => setSelectedShift(s)}
-                                        className={`px-2.5 py-1.5 rounded-lg text-[10px] font-bold transition-all ${selectedShift === s
-                                                ? s === 'Pagi' ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-md'
-                                                    : s === 'Siang' ? 'bg-gradient-to-r from-cyan-500 to-blue-500 text-white shadow-md'
-                                                        : 'bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-md'
-                                                : 'bg-[#0d1420] border border-[#2a3a4a] text-slate-500'
+                                        className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all ${selectedShift === s
+                                            ? s === 'Pagi' ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-md'
+                                                : s === 'Siang' ? 'bg-gradient-to-r from-cyan-500 to-blue-500 text-white shadow-md'
+                                                    : 'bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-md'
+                                            : 'bg-[#0d1420] border border-[#2a3a4a] text-slate-500'
                                             }`}
                                     >
                                         {s === 'Pagi' ? '🌅' : s === 'Siang' ? '☀️' : '🌙'} {s}
