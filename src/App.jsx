@@ -149,7 +149,7 @@ const App = () => {
         case 'statistics':
             return <StatisticsScreen setCurrentScreen={setCurrentScreen} apelHistory={apelHistory} scanHistory={scanHistory} activityLog={activityLog} />;
         case 'report-history':
-            return <ReportHistoryScreen setCurrentScreen={setCurrentScreen} />;
+            return <ReportHistoryScreen user={user} setCurrentScreen={setCurrentScreen} />;
         default:
             return <LoginScreen setUser={setUser} setCurrentScreen={setCurrentScreen} />;
     }

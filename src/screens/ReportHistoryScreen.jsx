@@ -4,7 +4,9 @@ import { api } from '../services/api';
 import Header from '../components/Header';
 import GlassCard from '../components/GlassCard';
 
-const ReportHistoryScreen = ({ setCurrentScreen }) => {
+const ReportHistoryScreen = ({ user, setCurrentScreen }) => {
+    const isAdmin = user?.role === 'Super Admin' || user?.role === 'Admin';
+    const isRupam = user?.name?.toLowerCase().includes('rupam');
     const [reports, setReports] = useState([]);
     const [loading, setLoading] = useState(true);
     const [expandedId, setExpandedId] = useState(null);
@@ -29,7 +31,12 @@ const ReportHistoryScreen = ({ setCurrentScreen }) => {
                 status: r.status || 'pending',
                 sentAt: r.sent_at || r.created_at
             }));
-            setReports(mapped);
+            // Rupam only sees their own reports
+            if (isRupam && !isAdmin) {
+                setReports(mapped.filter(r => r.senderName === user.name));
+            } else {
+                setReports(mapped);
+            }
         } catch (err) {
             console.error('Error loading reports:', err);
         } finally {
@@ -212,7 +219,7 @@ const ReportHistoryScreen = ({ setCurrentScreen }) => {
     return (
         <div className="min-h-screen bg-[#0f1729] font-sans flex flex-col">
             <div className="bg-[#1a2332] p-6 pt-8 border-b border-[#2a3a4a] sticky top-0 z-20">
-                <Header title="Riwayat Laporan" subtitle="Verifikasi Laporan Masuk" onBack={() => setCurrentScreen('home')} />
+                <Header title="Riwayat Laporan" subtitle={isAdmin ? 'Verifikasi Laporan Masuk' : 'Status Laporan Terkirim'} onBack={() => setCurrentScreen('home')} />
 
                 {/* Stats */}
                 <div className="flex gap-3 mt-4">
@@ -345,7 +352,7 @@ const ReportHistoryScreen = ({ setCurrentScreen }) => {
                                                 >
                                                     <Download size={14} /> Unduh PDF
                                                 </button>
-                                                {report.status === 'pending' && (
+                                                {isAdmin && report.status === 'pending' && (
                                                     <>
                                                         <button
                                                             onClick={() => updateStatus(report.id, 'verified')}
@@ -361,7 +368,7 @@ const ReportHistoryScreen = ({ setCurrentScreen }) => {
                                                         </button>
                                                     </>
                                                 )}
-                                                {report.status !== 'pending' && (
+                                                {isAdmin && report.status === 'rejected' && (
                                                     <button
                                                         onClick={() => updateStatus(report.id, 'pending')}
                                                         className="flex-1 py-2.5 bg-amber-500/10 border border-amber-500/30 rounded-xl text-amber-400 font-bold text-xs flex items-center justify-center gap-1.5 hover:bg-amber-500/20 transition"

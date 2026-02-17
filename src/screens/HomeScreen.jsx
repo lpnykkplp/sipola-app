@@ -214,12 +214,12 @@ const HomeScreen = ({ user, setCurrentScreen, apelHistory, activityLog }) => {
                     />
                 </div>
 
-                {(user.role === 'Super Admin' || user.role === 'Admin') && (
+                {(user.role === 'Super Admin' || user.role === 'Admin' || user.name?.toLowerCase().includes('rupam')) && (
                     <div className="mt-4 pt-4 border-t border-[#2a3a4a]">
                         <MenuCard
                             icon={FileText}
                             title="Riwayat Laporan"
-                            desc="Verifikasi laporan Rupam"
+                            desc={(user.role === 'Super Admin' || user.role === 'Admin') ? 'Verifikasi laporan Rupam' : 'Lihat status laporan'}
                             color="text-amber-400"
                             onClick={() => setCurrentScreen('report-history')}
                         />
