@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import {
     User, QrCode, Users, ClipboardList, PlusCircle,
-    CalendarDays, Sunrise, Sun, Moon, X, Eye
+    CalendarDays, Sunrise, Sun, Moon, Eye
 } from 'lucide-react';
+import ZoomableImageViewer from '../components/ZoomableImageViewer';
 import MenuCard from '../components/MenuCard';
 
 const HomeScreen = ({ user, setCurrentScreen, apelHistory, activityLog }) => {
@@ -45,12 +46,7 @@ const HomeScreen = ({ user, setCurrentScreen, apelHistory, activityLog }) => {
     return (
         <div className="min-h-screen bg-[#0f1729] font-sans pb-10">
             {viewImage && (
-                <div className="fixed inset-0 z-50 bg-black/95 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setViewImage(null)}>
-                    <button className="absolute top-6 right-6 text-white/70 hover:text-white bg-black/50 rounded-full p-2 transition-all">
-                        <X size={28} />
-                    </button>
-                    <img src={viewImage} alt="Full View" className="max-w-full max-h-[85vh] rounded-lg shadow-2xl object-contain animate-scale-up" onClick={(e) => e.stopPropagation()} />
-                </div>
+                <ZoomableImageViewer src={viewImage} onClose={() => setViewImage(null)} />
             )}
 
             <div className="h-64 bg-[#0a1020] rounded-b-[3.5rem] relative overflow-hidden shadow-2xl shadow-black/50">
@@ -60,25 +56,31 @@ const HomeScreen = ({ user, setCurrentScreen, apelHistory, activityLog }) => {
             </div>
 
             <div className="px-6 -mt-44 relative z-10">
-                <div className="flex justify-between items-start mb-6">
+                {/* Time indicator row: left = day/date, right = clock */}
+                <div className="flex justify-between items-center mb-5 bg-[#1a2332]/60 backdrop-blur-md border border-[#2a3a4a] rounded-2xl px-5 py-3">
+                    <div>
+                        <p className="text-teal-400 text-sm font-bold leading-tight">{formatDate(currentTime).split(',')[0]}</p>
+                        <p className="text-slate-400 text-xs font-medium">{formatDate(currentTime).split(',').slice(1).join(',').trim()}</p>
+                    </div>
+                    <div className="text-right">
+                        <p className="text-white text-3xl font-mono font-bold tracking-tighter leading-none">{formatTime(currentTime)}</p>
+                    </div>
+                </div>
+
+                {/* Name + Profile row */}
+                <div className="flex justify-between items-center mb-6">
                     <div>
                         <p className="text-teal-400 text-[10px] font-bold uppercase tracking-widest mb-1">Status: Aktif</p>
                         <h2 className="text-3xl font-black text-white leading-tight">{user.name}</h2>
-
-                        <div className="mt-4 mb-2">
-                            <p className="text-slate-400 text-xs font-medium opacity-80">{formatDate(currentTime)}</p>
-                            <p className="text-white text-3xl font-mono font-bold tracking-tighter">{formatTime(currentTime)} <span className="text-sm font-sans text-teal-400">WIB</span></p>
-                        </div>
-
                         <div className="mt-2 inline-flex items-center px-3 py-1 bg-white/5 backdrop-blur-md border border-[#2a3a4a] rounded-full">
                             <span className="text-[10px] font-bold text-teal-300 uppercase tracking-wide">{user.role}</span>
                         </div>
                     </div>
-                    <button onClick={() => setCurrentScreen('profile')} className="w-14 h-14 bg-[#1a2332] backdrop-blur-lg border border-[#2a3a4a] rounded-2xl flex items-center justify-center text-slate-400 hover:text-teal-400 hover:border-teal-500/30 transition-all shadow-lg overflow-hidden p-0">
+                    <button onClick={() => setCurrentScreen('profile')} className="w-16 h-16 bg-[#1a2332] backdrop-blur-lg border-2 border-teal-500/30 rounded-2xl flex items-center justify-center text-slate-400 hover:text-teal-400 hover:border-teal-400/50 transition-all shadow-lg shadow-teal-500/10 overflow-hidden p-0">
                         {user.avatar ? (
                             <img src={user.avatar} alt="Profile" className="w-full h-full object-cover" />
                         ) : (
-                            <User size={24} />
+                            <User size={26} />
                         )}
                     </button>
                 </div>

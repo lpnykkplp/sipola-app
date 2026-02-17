@@ -1,6 +1,7 @@
 import { api } from '../services/api';
 import React, { useState, useRef } from 'react';
-import { Save, Trash2, Eye, X, History, CalendarDays, Image, Loader2 } from 'lucide-react';
+import { Save, Trash2, Eye, History, CalendarDays, Image, Loader2 } from 'lucide-react';
+import ZoomableImageViewer from '../components/ZoomableImageViewer';
 import Header from '../components/Header';
 import GlassCard from '../components/GlassCard';
 
@@ -107,12 +108,7 @@ const ActivityScreen = ({ user, setCurrentScreen, setActivityLog, activityLog, r
             </div>
 
             {viewImage && (
-                <div className="fixed inset-0 z-50 bg-black/95 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setViewImage(null)}>
-                    <button className="absolute top-6 right-6 text-white/70 hover:text-white bg-black/50 rounded-full p-2 transition-all">
-                        <X size={28} />
-                    </button>
-                    <img src={viewImage} alt="Full View" className="max-w-full max-h-[85vh] rounded-lg shadow-2xl object-contain animate-scale-up" onClick={(e) => e.stopPropagation()} />
-                </div>
+                <ZoomableImageViewer src={viewImage} onClose={() => setViewImage(null)} />
             )}
 
             <div className="p-6 flex-1 overflow-y-auto">
