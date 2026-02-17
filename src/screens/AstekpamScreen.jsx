@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { ArrowLeftRight, ArrowRight, ArrowLeft, ChevronDown, ChevronUp, CalendarDays, Clock, CheckCircle, AlertTriangle, Loader2, RefreshCw, Save } from 'lucide-react';
+import { ArrowLeftRight, ArrowRight, ArrowLeft, ChevronDown, ChevronUp, CalendarDays, Clock, CheckCircle, AlertTriangle, Loader2, RefreshCw, Pencil, Trash2, X, Save } from 'lucide-react';
 import { api } from '../services/api';
 import Header from '../components/Header';
 import GlassCard from '../components/GlassCard';
@@ -35,6 +35,21 @@ const AstekpamScreen = ({ user, setCurrentScreen }) => {
     const [loadingLogs, setLoadingLogs] = useState(true);
     const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
     const [expandedId, setExpandedId] = useState(null);
+
+    // Edit modal state
+    const [editingLog, setEditingLog] = useState(null);
+    const [editShift, setEditShift] = useState('Pagi');
+    const [editPetugasLama, setEditPetugasLama] = useState('');
+    const [editPetugasBaru, setEditPetugasBaru] = useState('');
+    const [editInventaris, setEditInventaris] = useState({ ...DEFAULT_INVENTARIS });
+    const [editWbpTotal, setEditWbpTotal] = useState('');
+    const [editWbpSakit, setEditWbpSakit] = useState('');
+    const [editWbpBon, setEditWbpBon] = useState('');
+    const [editCatatan, setEditCatatan] = useState('');
+    const [isEditing, setIsEditing] = useState(false);
+
+    // Delete confirm
+    const [deleteConfirmId, setDeleteConfirmId] = useState(null);
 
     // Available receivers (Rupam I-IV excluding current user)
     const receiverOptions = RUPAM_ACCOUNTS.filter(
@@ -76,14 +91,14 @@ const AstekpamScreen = ({ user, setCurrentScreen }) => {
         l => l.petugasLama.toLowerCase() === petugasLama.toLowerCase() && l.dateISO === todayISO && l.status === 'pending'
     );
 
-    // Check if there's a pending handover targeting current user (someone handing over TO me)
+    // Check if there's a pending handover targeting current user
     const incomingHandover = logs.find(
         l => l.petugasBaru.toLowerCase() === petugasLama.toLowerCase() && l.dateISO === todayISO && l.status === 'pending'
     );
 
     // Button states
-    const canMenyerahkan = !myPendingHandover; // Can submit if no pending handover from me today
-    const canMenerima = !!incomingHandover; // Can accept if someone assigned handover to me
+    const canMenyerahkan = !myPendingHandover;
+    const canMenerima = !!incomingHandover;
 
     const filteredLogs = useMemo(() => {
         return logs.filter(l => l.dateISO === selectedDate);
@@ -97,41 +112,26 @@ const AstekpamScreen = ({ user, setCurrentScreen }) => {
         setIsSaving(true);
         try {
             await api.addAstekpamLog({
-                shift,
-                petugasLama,
-                petugasBaru,
-                inventaris,
+                shift, petugasLama, petugasBaru, inventaris,
                 wbpTotal: parseInt(wbpTotal) || 0,
                 wbpSakit: parseInt(wbpSakit) || 0,
                 wbpBon: parseInt(wbpBon) || 0,
-                catatan,
-                dateISO: todayISO,
-                status: 'pending'
+                catatan, dateISO: todayISO, status: 'pending'
             });
-
             setSuccessMsg('Penyerahan Berhasil!');
             setSaveSuccess(true);
-            setPetugasBaru('');
-            setWbpTotal('');
-            setWbpSakit('');
-            setWbpBon('');
-            setCatatan('');
-            setInventaris({ ...DEFAULT_INVENTARIS });
-
+            setPetugasBaru(''); setWbpTotal(''); setWbpSakit(''); setWbpBon('');
+            setCatatan(''); setInventaris({ ...DEFAULT_INVENTARIS });
             await loadLogs();
             setTimeout(() => setSaveSuccess(false), 2500);
         } catch (err) {
-            console.error('Error saving:', err);
             alert('Gagal menyerahkan: ' + err.message);
-        } finally {
-            setIsSaving(false);
-        }
+        } finally { setIsSaving(false); }
     };
 
     // Handle Menerima
     const handleMenerima = async () => {
         if (!incomingHandover) return;
-
         setIsSaving(true);
         try {
             await api.updateAstekpamStatus(incomingHandover.id, 'completed');
@@ -140,16 +140,65 @@ const AstekpamScreen = ({ user, setCurrentScreen }) => {
             await loadLogs();
             setTimeout(() => setSaveSuccess(false), 2500);
         } catch (err) {
-            console.error('Error accepting:', err);
             alert('Gagal menerima: ' + err.message);
-        } finally {
-            setIsSaving(false);
+        } finally { setIsSaving(false); }
+    };
+
+    // Open edit modal
+    const openEditModal = (log) => {
+        setEditingLog(log);
+        setEditShift(log.shift);
+        setEditPetugasLama(log.petugasLama);
+        setEditPetugasBaru(log.petugasBaru);
+        setEditInventaris({ ...DEFAULT_INVENTARIS, ...log.inventaris });
+        setEditWbpTotal(String(log.wbpTotal || ''));
+        setEditWbpSakit(String(log.wbpSakit || ''));
+        setEditWbpBon(String(log.wbpBon || ''));
+        setEditCatatan(log.catatan || '');
+    };
+
+    // Save edit
+    const handleSaveEdit = async () => {
+        if (!editPetugasBaru.trim()) return alert('Isi nama petugas penerima!');
+        setIsEditing(true);
+        try {
+            await api.updateAstekpamLog(editingLog.id, {
+                shift: editShift,
+                petugasLama: editPetugasLama,
+                petugasBaru: editPetugasBaru,
+                inventaris: editInventaris,
+                wbpTotal: parseInt(editWbpTotal) || 0,
+                wbpSakit: parseInt(editWbpSakit) || 0,
+                wbpBon: parseInt(editWbpBon) || 0,
+                catatan: editCatatan
+            });
+            setEditingLog(null);
+            setSuccessMsg('Berhasil Diperbarui!');
+            setSaveSuccess(true);
+            await loadLogs();
+            setTimeout(() => setSaveSuccess(false), 2500);
+        } catch (err) {
+            alert('Gagal memperbarui: ' + err.message);
+        } finally { setIsEditing(false); }
+    };
+
+    // Delete
+    const handleDelete = async (id) => {
+        try {
+            await api.deleteAstekpamLog(id);
+            setDeleteConfirmId(null);
+            setExpandedId(null);
+            setSuccessMsg('Data Dihapus!');
+            setSaveSuccess(true);
+            await loadLogs();
+            setTimeout(() => setSaveSuccess(false), 2500);
+        } catch (err) {
+            alert('Gagal menghapus: ' + err.message);
         }
     };
 
-    const updateInventaris = (key, val) => {
-        setInventaris(prev => ({ ...prev, [key]: val }));
-    };
+    const updateInventaris = (key, val) => setInventaris(prev => ({ ...prev, [key]: val }));
+    const updateEditInventaris = (key, val) => setEditInventaris(prev => ({ ...prev, [key]: val }));
 
     const getStatusColor = (val) => {
         if (['Baik', 'Lengkap', 'Ada'].includes(val)) return 'text-green-400 bg-green-500/10 border-green-500/30';
@@ -164,8 +213,8 @@ const AstekpamScreen = ({ user, setCurrentScreen }) => {
     };
 
     const handoverStatusConfig = {
-        pending: { label: 'Menunggu Penerima', color: 'text-amber-400', bg: 'bg-amber-500/10', border: 'border-amber-500/30', icon: Clock },
-        completed: { label: 'Selesai', color: 'text-green-400', bg: 'bg-green-500/10', border: 'border-green-500/30', icon: CheckCircle },
+        pending: { label: 'Menunggu Penerima', color: 'text-amber-400', bg: 'bg-amber-500/10', border: 'border-amber-500/30' },
+        completed: { label: 'Selesai', color: 'text-green-400', bg: 'bg-green-500/10', border: 'border-green-500/30' },
     };
 
     return (
@@ -177,12 +226,158 @@ const AstekpamScreen = ({ user, setCurrentScreen }) => {
             {/* Success overlay */}
             {saveSuccess && (
                 <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center">
-                    <div className="bg-[#1a2332] border border-green-500/30 rounded-3xl p-8 text-center animate-fade-in-up shadow-2xl">
+                    <div className="bg-[#1a2332] border border-green-500/30 rounded-3xl p-8 text-center shadow-2xl">
                         <div className="w-20 h-20 bg-green-500/20 rounded-full flex items-center justify-center border-2 border-green-500/50 mx-auto mb-4">
                             <CheckCircle size={40} className="text-green-400" />
                         </div>
                         <h3 className="font-bold text-green-400 text-lg mb-1">{successMsg}</h3>
                         <p className="text-slate-400 text-sm">Data telah disimpan</p>
+                    </div>
+                </div>
+            )}
+
+            {/* Delete confirmation overlay */}
+            {deleteConfirmId && (
+                <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-6">
+                    <div className="bg-[#1a2332] border border-red-500/30 rounded-3xl p-6 text-center shadow-2xl max-w-sm w-full">
+                        <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center border-2 border-red-500/50 mx-auto mb-4">
+                            <Trash2 size={28} className="text-red-400" />
+                        </div>
+                        <h3 className="font-bold text-red-400 text-lg mb-2">Hapus Data?</h3>
+                        <p className="text-slate-400 text-sm mb-5">Data serah terima ini akan dihapus permanen.</p>
+                        <div className="grid grid-cols-2 gap-3">
+                            <button
+                                onClick={() => setDeleteConfirmId(null)}
+                                className="py-3 bg-[#0d1420] border border-[#2a3a4a] rounded-xl text-slate-300 font-bold text-sm hover:bg-[#243044] transition"
+                            >
+                                Batal
+                            </button>
+                            <button
+                                onClick={() => handleDelete(deleteConfirmId)}
+                                className="py-3 bg-red-500/20 border border-red-500/30 rounded-xl text-red-400 font-bold text-sm hover:bg-red-500/30 transition"
+                            >
+                                Ya, Hapus
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Edit modal */}
+            {editingLog && (
+                <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-start justify-center overflow-y-auto">
+                    <div className="bg-[#1a2332] border border-teal-500/30 rounded-3xl shadow-2xl max-w-md w-full mx-4 my-6">
+                        {/* Modal header */}
+                        <div className="flex items-center justify-between p-5 border-b border-[#2a3a4a]">
+                            <h3 className="font-bold text-slate-200 flex items-center gap-2">
+                                <Pencil size={16} className="text-teal-400" /> Edit Serah Terima
+                            </h3>
+                            <button onClick={() => setEditingLog(null)} className="text-slate-500 hover:text-slate-300">
+                                <X size={20} />
+                            </button>
+                        </div>
+
+                        <div className="p-5 space-y-4 max-h-[70vh] overflow-y-auto">
+                            {/* Shift */}
+                            <div>
+                                <label className="block text-[10px] font-bold text-slate-500 uppercase mb-2">Shift</label>
+                                <div className="grid grid-cols-3 gap-2">
+                                    {Object.entries(shiftConfig).map(([key, cfg]) => (
+                                        <button key={key} type="button" onClick={() => setEditShift(key)}
+                                            className={`py-2 rounded-xl font-bold text-xs text-center transition-all ${editShift === key
+                                                ? `bg-gradient-to-r ${cfg.color} text-white`
+                                                : 'bg-[#0d1420] border border-[#2a3a4a] text-slate-500'
+                                                }`}
+                                        >
+                                            {cfg.icon} {key}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Petugas */}
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="block text-[10px] font-bold text-red-400 uppercase mb-1">Menyerahkan</label>
+                                    <input type="text" value={editPetugasLama} onChange={e => setEditPetugasLama(e.target.value)}
+                                        className="w-full bg-[#0d1420] border border-[#2a3a4a] rounded-xl px-3 py-2.5 text-xs text-slate-200 font-bold focus:ring-1 focus:ring-teal-500" />
+                                </div>
+                                <div>
+                                    <label className="block text-[10px] font-bold text-teal-400 uppercase mb-1">Menerima</label>
+                                    <select value={editPetugasBaru} onChange={e => setEditPetugasBaru(e.target.value)}
+                                        className="w-full bg-[#0d1420] border border-[#2a3a4a] rounded-xl px-3 py-2.5 text-xs text-slate-200 font-bold focus:ring-1 focus:ring-teal-500">
+                                        <option value="">Pilih...</option>
+                                        {RUPAM_ACCOUNTS.map(name => (
+                                            <option key={name} value={name}>{name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            </div>
+
+                            {/* Inventaris */}
+                            <div>
+                                <label className="block text-[10px] font-bold text-slate-500 uppercase mb-2">Inventaris</label>
+                                <div className="space-y-2">
+                                    {INVENTARIS_ITEMS.map(item => (
+                                        <div key={item.key} className="bg-[#0d1420] border border-[#2a3a4a] rounded-xl p-2.5">
+                                            <label className="block text-[10px] font-bold text-slate-400 mb-1.5">{item.label}</label>
+                                            <div className="flex gap-1.5">
+                                                {item.options.map(opt => (
+                                                    <button key={opt} type="button" onClick={() => updateEditInventaris(item.key, opt)}
+                                                        className={`flex-1 py-1.5 rounded-lg text-[10px] font-bold border transition-all ${editInventaris[item.key] === opt
+                                                            ? getStatusColor(opt)
+                                                            : 'bg-transparent border-[#2a3a4a] text-slate-600'
+                                                            }`}
+                                                    >
+                                                        {opt}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* WBP */}
+                            <div className="grid grid-cols-3 gap-2">
+                                <div>
+                                    <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Total WBP</label>
+                                    <input type="number" value={editWbpTotal} onChange={e => setEditWbpTotal(e.target.value)}
+                                        className="w-full bg-[#0d1420] border border-[#2a3a4a] rounded-xl px-3 py-2.5 text-xs text-slate-200 font-bold text-center focus:ring-1 focus:ring-teal-500" placeholder="0" />
+                                </div>
+                                <div>
+                                    <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Sakit</label>
+                                    <input type="number" value={editWbpSakit} onChange={e => setEditWbpSakit(e.target.value)}
+                                        className="w-full bg-[#0d1420] border border-amber-500/20 rounded-xl px-3 py-2.5 text-xs text-amber-400 font-bold text-center focus:ring-1 focus:ring-amber-500" placeholder="0" />
+                                </div>
+                                <div>
+                                    <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Di-Bon</label>
+                                    <input type="number" value={editWbpBon} onChange={e => setEditWbpBon(e.target.value)}
+                                        className="w-full bg-[#0d1420] border border-cyan-500/20 rounded-xl px-3 py-2.5 text-xs text-cyan-400 font-bold text-center focus:ring-1 focus:ring-cyan-500" placeholder="0" />
+                                </div>
+                            </div>
+
+                            {/* Catatan */}
+                            <div>
+                                <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Catatan</label>
+                                <textarea rows="2" value={editCatatan} onChange={e => setEditCatatan(e.target.value)}
+                                    className="w-full bg-[#0d1420] border border-[#2a3a4a] rounded-xl px-3 py-2.5 text-xs text-slate-200 focus:ring-1 focus:ring-teal-500 placeholder-slate-600"
+                                    placeholder="Catatan tambahan..." />
+                            </div>
+                        </div>
+
+                        {/* Modal footer */}
+                        <div className="p-5 border-t border-[#2a3a4a] flex gap-3">
+                            <button onClick={() => setEditingLog(null)}
+                                className="flex-1 py-3 bg-[#0d1420] border border-[#2a3a4a] rounded-xl text-slate-300 font-bold text-sm hover:bg-[#243044] transition">
+                                Batal
+                            </button>
+                            <button onClick={handleSaveEdit} disabled={isEditing}
+                                className="flex-1 py-3 bg-gradient-to-r from-teal-500 to-cyan-500 text-white font-bold text-sm rounded-xl flex items-center justify-center gap-2 active:scale-95 transition disabled:opacity-50">
+                                {isEditing ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+                                Simpan
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}
@@ -222,10 +417,7 @@ const AstekpamScreen = ({ user, setCurrentScreen }) => {
                     </h3>
                     <div className="grid grid-cols-3 gap-2">
                         {Object.entries(shiftConfig).map(([key, cfg]) => (
-                            <button
-                                key={key}
-                                type="button"
-                                onClick={() => setShift(key)}
+                            <button key={key} type="button" onClick={() => setShift(key)}
                                 className={`py-3 rounded-xl font-bold text-sm text-center transition-all ${shift === key
                                     ? `bg-gradient-to-r ${cfg.color} text-white shadow-lg scale-105`
                                     : 'bg-[#0d1420] border border-[#2a3a4a] text-slate-500 hover:border-slate-500'
@@ -245,7 +437,6 @@ const AstekpamScreen = ({ user, setCurrentScreen }) => {
                         <ArrowLeftRight size={14} /> Petugas Jaga
                     </h3>
                     <div className="grid grid-cols-2 gap-3">
-                        {/* Menyerahkan (left) */}
                         <div className="bg-[#0d1420] border border-red-500/20 rounded-xl p-3">
                             <div className="flex items-center gap-1.5 mb-2">
                                 <ArrowRight size={12} className="text-red-400" />
@@ -255,18 +446,13 @@ const AstekpamScreen = ({ user, setCurrentScreen }) => {
                                 <p className="text-sm text-slate-200 font-bold">{petugasLama}</p>
                             </div>
                         </div>
-
-                        {/* Menerima (right) */}
                         <div className="bg-[#0d1420] border border-teal-500/20 rounded-xl p-3">
                             <div className="flex items-center gap-1.5 mb-2">
                                 <ArrowLeft size={12} className="text-teal-400" />
                                 <label className="text-[9px] font-bold text-teal-400 uppercase">Menerima</label>
                             </div>
-                            <select
-                                value={petugasBaru}
-                                onChange={e => setPetugasBaru(e.target.value)}
-                                className="w-full bg-[#1a2332] border border-[#2a3a4a] rounded-lg px-3 py-2 text-sm text-slate-200 font-bold focus:ring-1 focus:ring-teal-500"
-                            >
+                            <select value={petugasBaru} onChange={e => setPetugasBaru(e.target.value)}
+                                className="w-full bg-[#1a2332] border border-[#2a3a4a] rounded-lg px-3 py-2 text-sm text-slate-200 font-bold focus:ring-1 focus:ring-teal-500">
                                 <option value="">Pilih Rupam...</option>
                                 {receiverOptions.map(name => (
                                     <option key={name} value={name}>{name}</option>
@@ -287,10 +473,7 @@ const AstekpamScreen = ({ user, setCurrentScreen }) => {
                                 <label className="block text-xs font-bold text-slate-300 mb-2">{item.label}</label>
                                 <div className="flex gap-2">
                                     {item.options.map(opt => (
-                                        <button
-                                            key={opt}
-                                            type="button"
-                                            onClick={() => updateInventaris(item.key, opt)}
+                                        <button key={opt} type="button" onClick={() => updateInventaris(item.key, opt)}
                                             className={`flex-1 py-2 rounded-lg text-[11px] font-bold border transition-all ${inventaris[item.key] === opt
                                                 ? getStatusColor(opt)
                                                 : 'bg-transparent border-[#2a3a4a] text-slate-600 hover:border-slate-500'
@@ -313,80 +496,46 @@ const AstekpamScreen = ({ user, setCurrentScreen }) => {
                     <div className="grid grid-cols-3 gap-3 mb-3">
                         <div>
                             <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Total WBP</label>
-                            <input
-                                type="number"
-                                value={wbpTotal}
-                                onChange={e => setWbpTotal(e.target.value)}
-                                className="w-full bg-[#0d1420] border border-[#2a3a4a] rounded-xl px-3 py-3 text-sm text-slate-200 font-bold text-center focus:ring-2 focus:ring-teal-500"
-                                placeholder="0"
-                            />
+                            <input type="number" value={wbpTotal} onChange={e => setWbpTotal(e.target.value)}
+                                className="w-full bg-[#0d1420] border border-[#2a3a4a] rounded-xl px-3 py-3 text-sm text-slate-200 font-bold text-center focus:ring-2 focus:ring-teal-500" placeholder="0" />
                         </div>
                         <div>
                             <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Sakit</label>
-                            <input
-                                type="number"
-                                value={wbpSakit}
-                                onChange={e => setWbpSakit(e.target.value)}
-                                className="w-full bg-[#0d1420] border border-amber-500/20 rounded-xl px-3 py-3 text-sm text-amber-400 font-bold text-center focus:ring-2 focus:ring-amber-500"
-                                placeholder="0"
-                            />
+                            <input type="number" value={wbpSakit} onChange={e => setWbpSakit(e.target.value)}
+                                className="w-full bg-[#0d1420] border border-amber-500/20 rounded-xl px-3 py-3 text-sm text-amber-400 font-bold text-center focus:ring-2 focus:ring-amber-500" placeholder="0" />
                         </div>
                         <div>
                             <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Di-Bon</label>
-                            <input
-                                type="number"
-                                value={wbpBon}
-                                onChange={e => setWbpBon(e.target.value)}
-                                className="w-full bg-[#0d1420] border border-cyan-500/20 rounded-xl px-3 py-3 text-sm text-cyan-400 font-bold text-center focus:ring-2 focus:ring-cyan-500"
-                                placeholder="0"
-                            />
+                            <input type="number" value={wbpBon} onChange={e => setWbpBon(e.target.value)}
+                                className="w-full bg-[#0d1420] border border-cyan-500/20 rounded-xl px-3 py-3 text-sm text-cyan-400 font-bold text-center focus:ring-2 focus:ring-cyan-500" placeholder="0" />
                         </div>
                     </div>
                     <div>
                         <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Catatan Khusus</label>
-                        <textarea
-                            rows="2"
-                            value={catatan}
-                            onChange={e => setCatatan(e.target.value)}
+                        <textarea rows="2" value={catatan} onChange={e => setCatatan(e.target.value)}
                             className="w-full bg-[#0d1420] border border-[#2a3a4a] rounded-xl px-4 py-3 text-sm text-slate-200 focus:ring-2 focus:ring-teal-500 placeholder-slate-600"
-                            placeholder="Catatan tambahan (opsional)..."
-                        />
+                            placeholder="Catatan tambahan (opsional)..." />
                     </div>
                 </GlassCard>
 
                 {/* Two Action Buttons */}
                 <div className="grid grid-cols-2 gap-3 mb-8">
-                    <button
-                        type="button"
-                        onClick={handleMenyerahkan}
-                        disabled={!canMenyerahkan || isSaving}
+                    <button type="button" onClick={handleMenyerahkan} disabled={!canMenyerahkan || isSaving}
                         className={`py-4 rounded-2xl font-bold flex items-center justify-center gap-2 transition shadow-lg ${canMenyerahkan && !isSaving
                             ? 'bg-gradient-to-r from-red-500 to-orange-500 text-white active:scale-95 shadow-red-500/20'
                             : 'bg-[#1a2332] border border-[#2a3a4a] text-slate-600 cursor-not-allowed shadow-none'
                             }`}
                     >
-                        {isSaving ? (
-                            <Loader2 size={16} className="animate-spin" />
-                        ) : (
-                            <ArrowRight size={16} />
-                        )}
+                        {isSaving ? <Loader2 size={16} className="animate-spin" /> : <ArrowRight size={16} />}
                         <span className="text-sm">Menyerahkan</span>
                     </button>
-
-                    <button
-                        type="button"
-                        onClick={handleMenerima}
-                        disabled={!canMenerima || isSaving}
+                    <button type="button" onClick={handleMenerima} disabled={!canMenerima || isSaving}
                         className={`py-4 rounded-2xl font-bold flex items-center justify-center gap-2 transition shadow-lg ${canMenerima && !isSaving
                             ? 'bg-gradient-to-r from-teal-500 to-cyan-500 text-white active:scale-95 shadow-teal-500/20'
                             : 'bg-[#1a2332] border border-[#2a3a4a] text-slate-600 cursor-not-allowed shadow-none'
                             }`}
                     >
-                        {isSaving ? (
-                            <Loader2 size={16} className="animate-spin" />
-                        ) : (
-                            <ArrowLeft size={16} />
-                        )}
+                        {isSaving ? <Loader2 size={16} className="animate-spin" /> : <ArrowLeft size={16} />}
                         <span className="text-sm">Menerima</span>
                     </button>
                 </div>
@@ -398,17 +547,10 @@ const AstekpamScreen = ({ user, setCurrentScreen }) => {
                     </h3>
                     <div className="flex items-center gap-2">
                         <CalendarDays className="w-4 h-4 text-slate-500" />
-                        <input
-                            type="date"
-                            value={selectedDate}
-                            onChange={e => setSelectedDate(e.target.value)}
-                            className="text-xs font-bold text-slate-400 bg-[#0d1420] border border-[#2a3a4a] rounded-lg p-1.5 focus:ring-1 focus:ring-teal-500"
-                        />
-                        <button
-                            onClick={loadLogs}
-                            disabled={loadingLogs}
-                            className="bg-[#0d1420] border border-[#2a3a4a] rounded-lg p-1.5 text-slate-500 hover:text-teal-400 transition disabled:opacity-50"
-                        >
+                        <input type="date" value={selectedDate} onChange={e => setSelectedDate(e.target.value)}
+                            className="text-xs font-bold text-slate-400 bg-[#0d1420] border border-[#2a3a4a] rounded-lg p-1.5 focus:ring-1 focus:ring-teal-500" />
+                        <button onClick={loadLogs} disabled={loadingLogs}
+                            className="bg-[#0d1420] border border-[#2a3a4a] rounded-lg p-1.5 text-slate-500 hover:text-teal-400 transition disabled:opacity-50">
                             <RefreshCw size={12} className={loadingLogs ? 'animate-spin' : ''} />
                         </button>
                     </div>
@@ -432,7 +574,6 @@ const AstekpamScreen = ({ user, setCurrentScreen }) => {
                             const sCfg = shiftConfig[log.shift] || shiftConfig.Pagi;
                             const hasIssues = Object.values(log.inventaris || {}).some(v => ['Rusak', 'Kurang', 'Tidak Ada'].includes(v));
                             const hStatus = handoverStatusConfig[log.status] || handoverStatusConfig.pending;
-                            const HStatusIcon = hStatus.icon;
 
                             return (
                                 <GlassCard key={log.id} className="p-0 overflow-hidden">
@@ -522,6 +663,22 @@ const AstekpamScreen = ({ user, setCurrentScreen }) => {
                                                     <p className="text-xs text-slate-300">{log.catatan}</p>
                                                 </div>
                                             )}
+
+                                            {/* Edit / Delete buttons - only for the user who submitted */}
+                                            {log.petugasLama.toLowerCase() === petugasLama.toLowerCase() && <div className="flex gap-2 pt-2 border-t border-[#2a3a4a]">
+                                                <button
+                                                    onClick={() => openEditModal(log)}
+                                                    className="flex-1 py-2.5 bg-teal-500/10 border border-teal-500/30 rounded-xl text-teal-400 font-bold text-xs flex items-center justify-center gap-1.5 hover:bg-teal-500/20 transition"
+                                                >
+                                                    <Pencil size={13} /> Edit
+                                                </button>
+                                                <button
+                                                    onClick={() => setDeleteConfirmId(log.id)}
+                                                    className="py-2.5 px-4 bg-red-500/10 border border-red-500/30 rounded-xl text-red-400 font-bold text-xs flex items-center justify-center gap-1.5 hover:bg-red-500/20 transition"
+                                                >
+                                                    <Trash2 size={13} /> Hapus
+                                                </button>
+                                            </div>}
                                         </div>
                                     )}
                                 </GlassCard>

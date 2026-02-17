@@ -200,5 +200,34 @@ export const api = {
             .single();
         if (error) throw error;
         return data;
+    },
+
+    async updateAstekpamLog(id, log) {
+        const updates = {
+            shift: log.shift,
+            petugas_lama: log.petugasLama,
+            petugas_baru: log.petugasBaru,
+            inventaris: log.inventaris,
+            wbp_total: log.wbpTotal,
+            wbp_sakit: log.wbpSakit,
+            wbp_bon: log.wbpBon,
+            catatan: log.catatan
+        };
+        const { data, error } = await supabase
+            .from('astekpam_logs')
+            .update(updates)
+            .eq('id', id)
+            .select()
+            .single();
+        if (error) throw error;
+        return data;
+    },
+
+    async deleteAstekpamLog(id) {
+        const { error } = await supabase
+            .from('astekpam_logs')
+            .delete()
+            .eq('id', id);
+        if (error) throw error;
     }
 };
