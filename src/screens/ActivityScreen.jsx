@@ -36,21 +36,26 @@ const ActivityScreen = ({ user, setCurrentScreen, setActivityLog, activityLog, r
             }
             const reader = new FileReader();
             reader.onload = (ev) => {
-                const img = new window.Image();
-                img.onload = () => {
-                    // Fast resize only (no watermark)
-                    let w = img.width, h = img.height;
-                    const max = 600;
-                    if (w > max || h > max) {
-                        if (w > h) { h = Math.round(h * max / w); w = max; }
-                        else { w = Math.round(w * max / h); h = max; }
-                    }
-                    const c = document.createElement('canvas');
-                    c.width = w; c.height = h;
-                    c.getContext('2d').drawImage(img, 0, 0, w, h);
-                    setImagePreviews(prev => [...prev, c.toDataURL('image/jpeg', 0.5)]);
-                };
-                img.src = ev.target.result;
+                const dataUrl = ev.target.result;
+                // Only compress if file >= 5MB
+                if (file.size >= 5 * 1024 * 1024) {
+                    const img = new window.Image();
+                    img.onload = () => {
+                        let w = img.width, h = img.height;
+                        const max = 600;
+                        if (w > max || h > max) {
+                            if (w > h) { h = Math.round(h * max / w); w = max; }
+                            else { w = Math.round(w * max / h); h = max; }
+                        }
+                        const c = document.createElement('canvas');
+                        c.width = w; c.height = h;
+                        c.getContext('2d').drawImage(img, 0, 0, w, h);
+                        setImagePreviews(prev => [...prev, c.toDataURL('image/jpeg', 0.5)]);
+                    };
+                    img.src = dataUrl;
+                } else {
+                    setImagePreviews(prev => [...prev, dataUrl]);
+                }
             };
             reader.readAsDataURL(file);
         });
