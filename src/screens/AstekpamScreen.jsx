@@ -320,14 +320,14 @@ const AstekpamScreen = ({ user, setCurrentScreen }) => {
                             {/* Inventaris */}
                             <div>
                                 <label className="block text-[10px] font-bold text-slate-500 uppercase mb-2">Inventaris</label>
-                                <div className="space-y-2">
+                                <div className="space-y-1.5">
                                     {INVENTARIS_ITEMS.map(item => (
-                                        <div key={item.key} className="bg-[#0d1420] border border-[#2a3a4a] rounded-xl p-2.5">
-                                            <label className="block text-[10px] font-bold text-slate-400 mb-1.5">{item.label}</label>
-                                            <div className="flex gap-1.5">
+                                        <div key={item.key} className="flex items-center justify-between bg-[#0d1420] border border-[#2a3a4a] rounded-lg px-3 py-2">
+                                            <span className="text-[10px] font-bold text-slate-400 flex-shrink-0 mr-2">{item.label}</span>
+                                            <div className="flex gap-1">
                                                 {item.options.map(opt => (
                                                     <button key={opt} type="button" onClick={() => updateEditInventaris(item.key, opt)}
-                                                        className={`flex-1 py-1.5 rounded-lg text-[10px] font-bold border transition-all ${editInventaris[item.key] === opt
+                                                        className={`px-2 py-1 rounded-md text-[9px] font-bold border transition-all ${editInventaris[item.key] === opt
                                                             ? getStatusColor(opt)
                                                             : 'bg-transparent border-[#2a3a4a] text-slate-600'
                                                             }`}
@@ -470,14 +470,14 @@ const AstekpamScreen = ({ user, setCurrentScreen }) => {
                     <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3 flex items-center gap-2">
                         📋 Checklist Inventaris
                     </h3>
-                    <div className="space-y-3">
+                    <div className="space-y-2">
                         {INVENTARIS_ITEMS.map(item => (
-                            <div key={item.key} className="bg-[#0d1420] border border-[#2a3a4a] rounded-xl p-3">
-                                <label className="block text-xs font-bold text-slate-300 mb-2">{item.label}</label>
-                                <div className="flex gap-2">
+                            <div key={item.key} className="flex items-center justify-between bg-[#0d1420] border border-[#2a3a4a] rounded-xl px-3 py-2.5">
+                                <span className="text-xs font-bold text-slate-300 flex-shrink-0 mr-3">{item.label}</span>
+                                <div className="flex gap-1.5">
                                     {item.options.map(opt => (
                                         <button key={opt} type="button" onClick={() => updateInventaris(item.key, opt)}
-                                            className={`flex-1 py-2 rounded-lg text-[11px] font-bold border transition-all ${inventaris[item.key] === opt
+                                            className={`px-2.5 py-1.5 rounded-lg text-[10px] font-bold border transition-all ${inventaris[item.key] === opt
                                                 ? getStatusColor(opt)
                                                 : 'bg-transparent border-[#2a3a4a] text-slate-600 hover:border-slate-500'
                                                 }`}
