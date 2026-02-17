@@ -12,7 +12,8 @@ const ActivityScreen = ({ user, setCurrentScreen, setActivityLog, activityLog, a
     const [imagePreviews, setImagePreviews] = useState([]);
     const galleryInputRef = useRef(null);
     const [viewImage, setViewImage] = useState(null);
-    const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+    const getLocalISO = (d = new Date()) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    const [selectedDate, setSelectedDate] = useState(getLocalISO());
     const [isProcessing, setIsProcessing] = useState(false);
     const [showReportPreview, setShowReportPreview] = useState(false);
     const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
@@ -84,7 +85,7 @@ const ActivityScreen = ({ user, setCurrentScreen, setActivityLog, activityLog, a
     const save = async (e) => {
         e.preventDefault();
         if (!desc) return alert("Isi uraian kegiatan!");
-        const todayISO = new Date().toISOString().split('T')[0];
+        const todayISO = getLocalISO();
         try {
             await api.addActivityLog({
                 id: Date.now(),

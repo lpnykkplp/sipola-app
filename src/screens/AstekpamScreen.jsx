@@ -33,7 +33,8 @@ const AstekpamScreen = ({ user, setCurrentScreen }) => {
     // History state
     const [logs, setLogs] = useState([]);
     const [loadingLogs, setLoadingLogs] = useState(true);
-    const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+    const getLocalISO = (d = new Date()) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    const [selectedDate, setSelectedDate] = useState(getLocalISO());
     const [expandedId, setExpandedId] = useState(null);
 
     // Edit modal state
@@ -86,7 +87,7 @@ const AstekpamScreen = ({ user, setCurrentScreen }) => {
     useEffect(() => { loadLogs(); }, []);
 
     // Check if current user already submitted a pending handover today
-    const todayISO = new Date().toISOString().split('T')[0];
+    const todayISO = getLocalISO();
     const myPendingHandover = logs.find(
         l => l.petugasLama.toLowerCase() === petugasLama.toLowerCase() && l.dateISO === todayISO && l.status === 'pending'
     );

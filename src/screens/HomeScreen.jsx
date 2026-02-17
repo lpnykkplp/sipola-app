@@ -7,7 +7,8 @@ import ZoomableImageViewer from '../components/ZoomableImageViewer';
 import MenuCard from '../components/MenuCard';
 
 const HomeScreen = ({ user, setCurrentScreen, apelHistory, activityLog }) => {
-    const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+    const getLocalISO = (d = new Date()) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    const [selectedDate, setSelectedDate] = useState(getLocalISO());
     const [viewImage, setViewImage] = useState(null);
     const [currentTime, setCurrentTime] = useState(new Date());
 
@@ -130,7 +131,7 @@ const HomeScreen = ({ user, setCurrentScreen, apelHistory, activityLog }) => {
                                         </div>
                                         <div className="relative flex flex-col items-center">
                                             <div className="w-3 h-3 rounded-full bg-teal-400 border-2 border-[#1a2332] shadow-sm z-10 relative">
-                                                {idx === 0 && selectedDate === new Date().toISOString().split('T')[0] && (
+                                                {idx === 0 && selectedDate === getLocalISO() && (
                                                     <div className="absolute inset-0 rounded-full bg-teal-400 animate-ping opacity-75"></div>
                                                 )}
                                             </div>

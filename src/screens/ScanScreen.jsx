@@ -85,7 +85,8 @@ const ScanScreen = ({ setCurrentScreen, qrDatabase, setScanHistory, scanHistory,
         );
 
         const time = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
-        const dateISO = new Date().toISOString().split('T')[0];
+        const now = new Date();
+        const dateISO = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 
         if (point) {
             setTempScan({ ...point, time, dateISO });

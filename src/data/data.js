@@ -31,7 +31,7 @@ export const generateDummyData = () => {
     const today = new Date();
     const yesterday = new Date(today); yesterday.setDate(today.getDate() - 1);
 
-    const formatDate = (date) => date.toISOString().split('T')[0];
+    const formatDate = (date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 
     const apelData = [
         { id: 101, pic: 'Ka. Rupam I', shift: 'Pagi', total: 452, time: '07:30', dateISO: formatDate(today) },

@@ -29,7 +29,8 @@ const ApelScreen = ({ user, setCurrentScreen, apelHistory, setApelHistory, apelI
         return () => clearInterval(timer);
     }, []);
 
-    const todayISO = currentTime.toISOString().split('T')[0];
+    const getLocalISO = (d = new Date()) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    const todayISO = getLocalISO(currentTime);
     const todayFormatted = getFormattedDate(todayISO);
 
     const save = async () => {
