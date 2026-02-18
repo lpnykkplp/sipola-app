@@ -43,6 +43,25 @@ export const api = {
         return data[0];
     },
 
+    async updateApelLog(id, updates) {
+        const { data, error } = await supabase
+            .from('apel_logs')
+            .update(updates)
+            .eq('id', id)
+            .select()
+            .single();
+        if (error) throw error;
+        return data;
+    },
+
+    async deleteApelLog(id) {
+        const { error } = await supabase
+            .from('apel_logs')
+            .delete()
+            .eq('id', id);
+        if (error) throw error;
+    },
+
     // --- ACTIVITY LOGS ---
     async getActivityLogs() {
         const { data, error } = await supabase
