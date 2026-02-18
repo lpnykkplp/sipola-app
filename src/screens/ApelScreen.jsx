@@ -1,6 +1,6 @@
 import { api } from '../services/api';
 import React, { useState } from 'react';
-import { Save, CheckCircle, Building2, CalendarDays, Pencil, Trash2, X } from 'lucide-react';
+import { Save, CheckCircle, Building2, CalendarDays, Pencil, Trash2, X, ChevronDown } from 'lucide-react';
 import { BLOCK_CONFIG } from '../data/data';
 import Header from '../components/Header';
 import GlassCard from '../components/GlassCard';
@@ -41,6 +41,9 @@ const ApelScreen = ({ user, setCurrentScreen, apelHistory, setApelHistory, apelI
 
     // Delete confirm state
     const [deleteConfirmId, setDeleteConfirmId] = useState(null);
+
+    // Expand detail state
+    const [expandedId, setExpandedId] = useState(null);
 
     const openEditModal = (log) => {
         setEditingLog(log);
@@ -201,7 +204,10 @@ const ApelScreen = ({ user, setCurrentScreen, apelHistory, setApelHistory, apelI
                         ) : (
                             apelHistory.map(log => (
                                 <GlassCard key={log.id} className="p-5">
-                                    <div className="flex justify-between items-start">
+                                    <div
+                                        className="flex justify-between items-start cursor-pointer"
+                                        onClick={() => setExpandedId(expandedId === log.id ? null : log.id)}
+                                    >
                                         <div>
                                             <p className="font-bold text-slate-200">{log.pic}</p>
                                             <p className="text-xs text-slate-500 mt-1 font-medium">
@@ -211,11 +217,30 @@ const ApelScreen = ({ user, setCurrentScreen, apelHistory, setApelHistory, apelI
                                                 {log.time} • Shift {log.shift}
                                             </p>
                                         </div>
-                                        <div className="text-right">
-                                            <span className="block text-2xl font-black text-teal-400">{log.total}</span>
-                                            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">WBP</span>
+                                        <div className="flex items-start gap-2">
+                                            <div className="text-right">
+                                                <span className="block text-2xl font-black text-teal-400">{log.total}</span>
+                                                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">WBP</span>
+                                            </div>
+                                            <ChevronDown size={16} className={`text-slate-500 mt-1 transition-transform ${expandedId === log.id ? 'rotate-180' : ''}`} />
                                         </div>
                                     </div>
+
+                                    {/* Expanded detail view */}
+                                    {expandedId === log.id && log.details && (
+                                        <div className="mt-3 pt-3 border-t border-[#2a3a4a]">
+                                            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Detail Per Blok</p>
+                                            <div className="grid grid-cols-2 gap-2">
+                                                {Object.entries(log.details).map(([key, val]) => (
+                                                    <div key={key} className="flex items-center justify-between bg-[#0d1420] border border-[#2a3a4a] rounded-lg px-3 py-2">
+                                                        <span className="text-[10px] font-bold text-slate-400">{key}</span>
+                                                        <span className="text-sm font-black text-teal-400">{val}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
                                     {/* Edit / Delete — only for logged-in user's entries */}
                                     {isOwner(log) && (
                                         <div className="flex gap-2 mt-3 pt-3 border-t border-[#2a3a4a]">
