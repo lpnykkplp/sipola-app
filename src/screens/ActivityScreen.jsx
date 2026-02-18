@@ -127,6 +127,11 @@ const ActivityScreen = ({ user, setCurrentScreen, setActivityLog, activityLog, a
 
     const filteredActivities = getFilteredActivities();
 
+    // Only logged-in user's activities — for report/PDF
+    const myFilteredActivities = filteredActivities.filter(
+        item => item.user && user?.name && item.user.toLowerCase() === user.name.toLowerCase()
+    );
+
     // --- Report data ---
     const reportDate = useMemo(() => {
         const d = new Date(selectedDate + 'T00:00:00');
@@ -208,7 +213,7 @@ const ActivityScreen = ({ user, setCurrentScreen, setActivityLog, activityLog, a
         doc.setFont('helvetica', 'normal');
         doc.setFontSize(9);
 
-        const activities = filteredActivities;
+        const activities = myFilteredActivities;
 
         if (activities.length === 0) {
             addNewPageIfNeeded(10);
@@ -289,21 +294,13 @@ const ActivityScreen = ({ user, setCurrentScreen, setActivityLog, activityLog, a
                 date: selectedDate,
                 dateFormatted: reportDate.full,
                 wbpCount: String(latestWbpCount),
-                activitiesCount: filteredActivities.length,
-                activitiesSummary: filteredActivities.map(a => ({ time: a.time, desc: a.desc })),
+                activitiesCount: myFilteredActivities.length,
+                activitiesSummary: myFilteredActivities.map(a => ({ time: a.time, desc: a.desc })),
                 sentAt: new Date().toISOString(),
                 status: 'pending'
             };
 
             await api.addReport(report);
-
-            // Auto-clear activity logs for this date after sending
-            try {
-                await api.deleteActivityLogsByDate(selectedDate);
-                refreshData();
-            } catch (clearErr) {
-                console.warn('Failed to clear activity logs:', clearErr);
-            }
 
             setSendSuccess(true);
             setTimeout(() => {
@@ -371,8 +368,8 @@ const ActivityScreen = ({ user, setCurrentScreen, setActivityLog, activityLog, a
                                             type="button"
                                             onClick={() => setReportShift(key)}
                                             className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all ${reportShift === key
-                                                    ? `bg-gradient-to-r ${cfg.color} text-white shadow-md`
-                                                    : 'bg-[#1a2332] border border-[#2a3a4a] text-slate-500'
+                                                ? `bg-gradient-to-r ${cfg.color} text-white shadow-md`
+                                                : 'bg-[#1a2332] border border-[#2a3a4a] text-slate-500'
                                                 }`}
                                         >
                                             {cfg.icon} {key}
@@ -430,14 +427,14 @@ const ActivityScreen = ({ user, setCurrentScreen, setActivityLog, activityLog, a
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {filteredActivities.length === 0 ? (
+                                        {myFilteredActivities.length === 0 ? (
                                             <tr>
                                                 <td colSpan="3" className="border border-slate-200 px-2 py-3 text-center text-slate-400 italic">
                                                     Tidak ada kegiatan pada tanggal ini
                                                 </td>
                                             </tr>
                                         ) : (
-                                            filteredActivities.map((item, idx) => (
+                                            myFilteredActivities.map((item, idx) => (
                                                 <tr key={item.id} className={idx % 2 === 0 ? 'bg-slate-50' : ''}>
                                                     <td className="border border-slate-200 px-1 py-1.5 text-center">{idx + 1}</td>
                                                     <td className="border border-slate-200 px-1 py-1.5 text-center font-mono">{item.time}</td>
