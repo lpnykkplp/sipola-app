@@ -227,19 +227,33 @@ const ApelScreen = ({ user, setCurrentScreen, apelHistory, setApelHistory, apelI
                                     </div>
 
                                     {/* Expanded detail view */}
-                                    {expandedId === log.id && log.details && (
-                                        <div className="mt-3 pt-3 border-t border-[#2a3a4a]">
-                                            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Detail Per Blok</p>
-                                            <div className="grid grid-cols-2 gap-2">
-                                                {Object.entries(log.details).map(([key, val]) => (
-                                                    <div key={key} className="flex items-center justify-between bg-[#0d1420] border border-[#2a3a4a] rounded-lg px-3 py-2">
-                                                        <span className="text-[10px] font-bold text-slate-400">{key}</span>
-                                                        <span className="text-sm font-black text-teal-400">{val}</span>
-                                                    </div>
-                                                ))}
+                                    {expandedId === log.id && log.details && (() => {
+                                        // Build ordered detail keys following BLOCK_CONFIG order
+                                        const orderedKeys = [];
+                                        blocks.forEach(block => {
+                                            const floors = BLOCK_CONFIG[block].floors;
+                                            if (floors === 1) {
+                                                orderedKeys.push({ key: block, label: block });
+                                            } else {
+                                                for (let f = 1; f <= floors; f++) {
+                                                    orderedKeys.push({ key: `${block}-L${f}`, label: `${block} Lt ${f}` });
+                                                }
+                                            }
+                                        });
+                                        return (
+                                            <div className="mt-3 pt-3 border-t border-[#2a3a4a]">
+                                                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Detail Per Blok</p>
+                                                <div className="grid grid-cols-2 gap-2">
+                                                    {orderedKeys.map(({ key, label }) => (
+                                                        <div key={key} className="flex items-center justify-between bg-[#0d1420] border border-[#2a3a4a] rounded-lg px-3 py-2">
+                                                            <span className="text-[10px] font-bold text-slate-400">{label}</span>
+                                                            <span className="text-sm font-black text-teal-400">{log.details[key] || 0}</span>
+                                                        </div>
+                                                    ))}
+                                                </div>
                                             </div>
-                                        </div>
-                                    )}
+                                        );
+                                    })()}
 
                                     {/* Edit / Delete — only for logged-in user's entries */}
                                     {isOwner(log) && (
