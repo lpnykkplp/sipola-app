@@ -1,6 +1,6 @@
 import { api } from '../services/api';
 import React, { useState, useRef, useMemo } from 'react';
-import { Save, Trash2, Eye, History, CalendarDays, Image, Loader2, FileText, X, Download, Send, CheckCircle, Edit3 } from 'lucide-react';
+import { Save, Trash2, Eye, History, CalendarDays, Image, Loader2, FileText, X, Download, Send, CheckCircle, Edit3, ArrowUpDown } from 'lucide-react';
 import ZoomableImageViewer from '../components/ZoomableImageViewer';
 import Header from '../components/Header';
 import GlassCard from '../components/GlassCard';
@@ -20,6 +20,7 @@ const ActivityScreen = ({ user, setCurrentScreen, setActivityLog, activityLog, a
     const [isSending, setIsSending] = useState(false);
     const [sendSuccess, setSendSuccess] = useState(false);
     const [petugasJaga, setPetugasJaga] = useState(user?.name || '');
+    const [sortNewestFirst, setSortNewestFirst] = useState(true);
 
     const isRupam = user?.name?.toLowerCase().includes('rupam');
 
@@ -108,8 +109,12 @@ const ActivityScreen = ({ user, setCurrentScreen, setActivityLog, activityLog, a
         return activityLog
             .filter(item => item.dateISO === selectedDate)
             .sort((a, b) => {
-                if (b.time !== a.time) return b.time.localeCompare(a.time);
-                return b.id.toString().localeCompare(a.id.toString());
+                const cmp = a.time.localeCompare(b.time);
+                const idCmp = a.id.toString().localeCompare(b.id.toString());
+                if (sortNewestFirst) {
+                    return cmp !== 0 ? -cmp : -idCmp;
+                }
+                return cmp !== 0 ? cmp : idCmp;
             });
     };
 
@@ -283,6 +288,14 @@ const ActivityScreen = ({ user, setCurrentScreen, setActivityLog, activityLog, a
             };
 
             await api.addReport(report);
+
+            // Auto-clear activity logs for this date after sending
+            try {
+                await api.deleteActivityLogsByDate(selectedDate);
+                refreshData();
+            } catch (clearErr) {
+                console.warn('Failed to clear activity logs:', clearErr);
+            }
 
             setSendSuccess(true);
             setTimeout(() => {
@@ -524,6 +537,14 @@ const ActivityScreen = ({ user, setCurrentScreen, setActivityLog, activityLog, a
                         <History size={18} className="mr-2 text-slate-500" /> Riwayat Kegiatan
                     </h3>
                     <div className="flex items-center gap-2">
+                        <button
+                            onClick={() => setSortNewestFirst(prev => !prev)}
+                            className="flex items-center gap-1 text-[10px] font-bold px-2 py-1.5 rounded-lg bg-[#0d1420] border border-[#2a3a4a] text-slate-400 hover:border-teal-500/30 hover:text-teal-400 transition-all"
+                            title={sortNewestFirst ? 'Terbaru di atas' : 'Terlama di atas'}
+                        >
+                            <ArrowUpDown size={12} />
+                            {sortNewestFirst ? 'Terbaru' : 'Terlama'}
+                        </button>
                         <CalendarDays className="w-4 h-4 text-slate-500" />
                         <input
                             type="date"

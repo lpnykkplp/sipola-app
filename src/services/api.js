@@ -73,6 +73,14 @@ export const api = {
         return data[0];
     },
 
+    async deleteActivityLogsByDate(dateISO) {
+        const { error } = await supabase
+            .from('activity_logs')
+            .delete()
+            .eq('date_iso', dateISO);
+        if (error) throw error;
+    },
+
     // --- SCAN LOGS ---
     async getScanLogs() {
         const { data, error } = await supabase
