@@ -21,6 +21,13 @@ const ActivityScreen = ({ user, setCurrentScreen, setActivityLog, activityLog, a
     const [sendSuccess, setSendSuccess] = useState(false);
     const [petugasJaga, setPetugasJaga] = useState(user?.name || '');
     const [sortNewestFirst, setSortNewestFirst] = useState(true);
+    const [reportShift, setReportShift] = useState('Pagi');
+
+    const SHIFT_CONFIG = {
+        Pagi: { time: '07.00 - 13.00', icon: '🌅', color: 'from-amber-500 to-orange-500' },
+        Siang: { time: '13.00 - 19.00', icon: '☀️', color: 'from-cyan-500 to-blue-500' },
+        Malam: { time: '19.00 - 07.00', icon: '🌙', color: 'from-indigo-500 to-purple-500' },
+    };
 
     const isRupam = user?.name?.toLowerCase().includes('rupam');
 
@@ -167,6 +174,7 @@ const ActivityScreen = ({ user, setCurrentScreen, setActivityLog, activityLog, a
 
         const infoItems = [
             ['Hari / Tanggal', reportDate.full],
+            ['Shift Jaga', `${reportShift} (${SHIFT_CONFIG[reportShift].time})`],
             ['Petugas Jaga', petugasJaga],
             ['Jumlah WBP', latestWbpCount === '-' ? 'Belum ada data apel' : `${latestWbpCount} orang`],
         ];
@@ -353,6 +361,27 @@ const ActivityScreen = ({ user, setCurrentScreen, setActivityLog, activityLog, a
 
                         {/* Modal Body - Report Preview */}
                         <div className="flex-1 overflow-y-auto p-5">
+                            {/* Shift Jaga selector */}
+                            <div className="mb-3 bg-[#0d1420] border border-[#2a3a4a] rounded-xl p-3">
+                                <label className="block text-[10px] font-bold text-slate-500 uppercase mb-2">Shift Jaga</label>
+                                <div className="flex gap-1.5">
+                                    {Object.entries(SHIFT_CONFIG).map(([key, cfg]) => (
+                                        <button
+                                            key={key}
+                                            type="button"
+                                            onClick={() => setReportShift(key)}
+                                            className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all ${reportShift === key
+                                                    ? `bg-gradient-to-r ${cfg.color} text-white shadow-md`
+                                                    : 'bg-[#1a2332] border border-[#2a3a4a] text-slate-500'
+                                                }`}
+                                        >
+                                            {cfg.icon} {key}
+                                        </button>
+                                    ))}
+                                </div>
+                                <p className="text-[9px] text-slate-500 mt-1.5 text-center">Waktu: {SHIFT_CONFIG[reportShift].time}</p>
+                            </div>
+
                             {/* Editable Petugas Jaga */}
                             <div className="mb-4 bg-[#0d1420] border border-[#2a3a4a] rounded-xl p-3">
                                 <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1.5 flex items-center gap-1">
@@ -376,6 +405,10 @@ const ActivityScreen = ({ user, setCurrentScreen, setActivityLog, activityLog, a
                                     <div className="flex">
                                         <span className="w-24 font-bold">Hari / Tanggal</span>
                                         <span>: {reportDate.full}</span>
+                                    </div>
+                                    <div className="flex">
+                                        <span className="w-24 font-bold">Shift Jaga</span>
+                                        <span>: {reportShift} ({SHIFT_CONFIG[reportShift].time})</span>
                                     </div>
                                     <div className="flex">
                                         <span className="w-24 font-bold">Petugas Jaga</span>
